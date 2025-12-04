@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>才能×ホロスコープ 16タイプ診断（ライト版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px;
+      line-height: 1.7;
+      background: #f7f7fb;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin: 12px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .small {
+      font-size: 0.85rem;
+      color: #555;
+    }
+    .question {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    .question:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    .question-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    label.option {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      background: #fafafa;
+    }
+    input[type="radio"] {
+      cursor: pointer;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #4b7bec;
+      color: white;
+      margin-top: 8px;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .axis-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 0.95rem;
+    }
+    .axis-label {
+      min-width: 190px;
+    }
+    .axis-bar-wrap {
+      flex: 1;
+      background: #f0f0f5;
+      border-radius: 999px;
+      overflow: hidden;
+      height: 10px;
+    }
+    .axis-bar {
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s;
+    }
+    .axis-percent {
+      min-width: 40px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    select {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+      margin-left: 4px;
+    }
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>才能×ホロスコープ 16タイプ診断（ライト版）</h1>
+    <p class="small">
+      この診断では、まず<strong>4つの才能エレメント</strong>（EARTH／FIRE／AIR／WATER）の中で、<br>
+      あなたが今いちばん使っているエレメントをざっくりチェックします。<br>
+      そのあと<strong>太陽星座のエレメント</strong>を選ぶと、星と才能を合わせた16タイプの結果が表示されます。
+    </p>
+    <p class="small">
+      各質問について、「1：まったく当てはまらない」〜「5：とても当てはまる」で答えてください。
+    </p>
+  </div>
+
+  <form id="quizForm" class="card">
+    <div id="questionsContainer"></div>
+    <button type="submit">才能エレメントの結果を見る</button>
+    <p class="small">※すべての質問に回答してからボタンを押してください。</p>
+  </form>
+
+  <div id="resultCard" class="card" style="display:none;">
+    <div id="talentResult"></div>
+
+    <hr style="margin:16px 0;">
+
+    <div id="astroSection">
+      <div class="result-title">星と才能を合わせたタイプ診断</div>
+      <p class="small">
+        太陽星座のエレメントを選ぶと、星と才能を合わせた16タイプの結果が表示されます。<br>
+        例：牡羊・獅子・射手 → FIRE／牡牛・乙女・山羊 → EARTH／双子・天秤・水瓶 → AIR／蟹・蠍・魚 → WATER
+      </p>
+      <p class="small">
+        あなたの太陽星座のエレメント：
+        <select id="starElementSelect">
+          <option value="">選択してください</option>
+          <option value="FIRE">FIRE（牡羊・獅子・射手）</option>
+          <option value="EARTH">EARTH（牡牛・乙女・山羊）</option>
+          <option value="AIR">AIR（双子・天秤・水瓶）</option>
+          <option value="WATER">WATER（蟹・蠍・魚）</option>
+        </select>
+        <button type="button" id="astroResultBtn">タイプを見る</button>
+      </p>
+      <div id="astroResultBox" class="small" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // 才能エレメントの表示名
+    const elementDisplayNames = {
+      EARTH: "EARTH｜形にする領域",
+      FIRE:  "FIRE｜人と場を動かす領域",
+      AIR:   "AIR｜しくみを組む領域",
+      WATER: "WATER｜絆を育てる領域"
+    };
+
+    // 才能エレメントの説明
+    const elementDescriptions = {
+      EARTH: "計画を立てる・段取りを組む・コツコツやり切ることで、アイデアを現実の形にしていくエレメントです。",
+      FIRE:  "発信・リーダーシップ・盛り上げ役など、人と場を動かすことで、流れを作っていくエレメントです。",
+      AIR:   "情報を集めて整理したり、しくみやルールを考えたりしながら、本質をつかむエレメントです。",
+      WATER: "人の気持ちや場の雰囲気に敏感で、安心できるつながりやチームワークを大切にするエレメントです。"
+    };
+
+    // 才能エレメント × 星エレメント → 16タイプ定義
+    const talentStarTypes = {
+      "EARTH-EARTH": {
+        title: "畑を耕す実行派タイプ",
+        oneLine: "コツコツ土台をつくって、確実に結果を出していく人。"
+      },
+      "EARTH-FIRE": {
+        title: "情熱を形にする実行タイプ",
+        oneLine: "「これやりたい！」という火を、ちゃんと行動と成果につなげる人。"
+      },
+      "EARTH-AIR": {
+        title: "設計図から形にする実行タイプ",
+        oneLine: "頭の中のプランや構造を、そのまま現実の仕組みに落としていく人。"
+      },
+      "EARTH-WATER": {
+        title: "思いやりで現場を整える実行タイプ",
+        oneLine: "人の気持ちをくみとりながら、無理のない形で物事を進めていく人。"
+      },
+
+      "FIRE-FIRE": {
+        title: "場を燃やすムードメーカータイプ",
+        oneLine: "いるだけで場の温度が上がる、盛り上げ役＆火付け役。"
+      },
+      "FIRE-EARTH": {
+        title: "地に足ついたリーダータイプ",
+        oneLine: "現実感のある一言で、みんなをぐいっと前に進めるリーダー。"
+      },
+      "FIRE-AIR": {
+        title: "言葉で火をつける発信タイプ",
+        oneLine: "言葉やストーリーで、人の心に「やってみたい！」を灯す人。"
+      },
+      "FIRE-WATER": {
+        title: "心に火を灯す応援タイプ",
+        oneLine: "相手の気持ちに寄りそいながら、「一歩出てみようよ」と背中を押す人。"
+      },
+
+      "AIR-FIRE": {
+        title: "アイデアで場を動かす企画タイプ",
+        oneLine: "おもしろい企画や工夫で、人や場をワクワクさせる人。"
+      },
+      "AIR-EARTH": {
+        title: "現実を整える設計タイプ",
+        oneLine: "混ざった状況を整理して、仕組みやルールに落とし込む人。"
+      },
+      "AIR-AIR": {
+        title: "本質を読み解くナビゲータータイプ",
+        oneLine: "情報の中からツボを見抜き、「結局ここが大事」と方向を示す人。"
+      },
+      "AIR-WATER": {
+        title: "物語を聴き出すストーリー編集タイプ",
+        oneLine: "相手の話の中から、その人らしい物語やメッセージを引き出す人。"
+      },
+
+      "WATER-FIRE": {
+        title: "情熱を支える伴走タイプ",
+        oneLine: "ガツガツ前に出るより、情熱的な人の隣で支えながら一緒に走る人。"
+      },
+      "WATER-EARTH": {
+        title: "現場をあたためるケアタイプ",
+        oneLine: "チームや場のコンディションを見ながら、安心して動ける環境を整える人。"
+      },
+      "WATER-AIR": {
+        title: "対話で場を整えるファシリタイプ",
+        oneLine: "対話を通して、一人ひとりの声を拾いながら場をまとめていく人。"
+      },
+      "WATER-WATER": {
+        title: "安心感でつなぐコネクタータイプ",
+        oneLine: "「ここにいるとホッとする」と感じる人と人を、やわらかくつないでいく人。"
+      }
+    };
+
+    // 才能診断用の質問（各エレメント3問ずつ・計12問のライト版）
+    const questions = [
+      // EARTH
+      { id: 1, element: "EARTH", text: "計画やスケジュールを立ててから動くことが多い。" },
+      { id: 2, element: "EARTH", text: "コツコツ続ける作業や、地道な積み上げはわりと得意だ。" },
+      { id: 3, element: "EARTH", text: "「最後までやり切ること」にわりとこだわる方だと思う。" },
+
+      // FIRE
+      { id: 4, element: "FIRE", text: "おもしろそうなことがあると、すぐに「やってみたい！」と思う。" },
+      { id: 5, element: "FIRE", text: "人前で話したり、自分の考えを発信することにあまり抵抗がない。" },
+      { id: 6, element: "FIRE", text: "場が静かすぎると、つい盛り上げ役になってしまうことがある。" },
+
+      // AIR
+      { id: 7, element: "AIR", text: "考えごとをするとき、メモやノートに整理して書き出すのが好きだ。" },
+      { id: 8, element: "AIR", text: "情報や話を聞いたとき、「結局いちばん大事なのはどこ？」と考える。" },
+      { id: 9, element: "AIR", text: "仕組みやルールを整えたり改善したりすることに興味がある。" },
+
+      // WATER
+      { id: 10, element: "WATER", text: "人の表情や声のトーンから、気持ちの変化に気づきやすいと思う。" },
+      { id: 11, element: "WATER", text: "誰かがしんどそうにしていると、つい声をかけたくなる。" },
+      { id: 12, element: "WATER", text: "安心して話せる場や関係性を大事にしたいと感じる。" }
+    ];
+
+    // 質問の描画
+    const questionsContainer = document.getElementById("questionsContainer");
+
+    questions.forEach((q, index) => {
+      const wrap = document.createElement("div");
+      wrap.className = "question";
+
+      const title = document.createElement("div");
+      title.className = "question-title";
+      title.textContent = `${index + 1}. ${q.text}`;
+      wrap.appendChild(title);
+
+      const options = document.createElement("div");
+      options.className = "options";
+
+      const labels = [
+        "1：まったく当てはまらない",
+        "2：あまり当てはまらない",
+        "3：どちらともいえない",
+        "4：かなり当てはまる",
+        "5：とても当てはまる"
+      ];
+
+      for (let value = 1; value <= 5; value++) {
+        const label = document.createElement("label");
+        label.className = "option";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `q${q.id}`;
+        input.value = value;
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(labels[value - 1]));
+        options.appendChild(label);
+      }
+
+      wrap.appendChild(options);
+      questionsContainer.appendChild(wrap);
+    });
+
+    const quizForm = document.getElementById("quizForm");
+    const resultCard = document.getElementById("resultCard");
+    const talentResultDiv = document.getElementById("talentResult");
+
+    let latestTalentElementKey = null; // 才能エレメント（FIRE/EARTH/AIR/WATER）のキーを保存
+
+    quizForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const answers = {};
+      let allAnswered = true;
+
+      questions.forEach(q => {
+        const selected = quizForm.querySelector(`input[name="q${q.id}"]:checked`);
+        if (!selected) {
+          allAnswered = false;
+        } else {
+          answers[q.id] = Number(selected.value);
+        }
+      });
+
+      if (!allAnswered) {
+        alert("まだ答えていない質問があります。すべての質問に回答してください。");
+        return;
+      }
+
+      // エレメントごとのスコア集計
+      const scores = {
+        EARTH: 0,
+        FIRE: 0,
+        AIR: 0,
+        WATER: 0
+      };
+      const maxScores = {
+        EARTH: 0,
+        FIRE: 0,
+        AIR: 0,
+        WATER: 0
+      };
+
+      questions.forEach(q => {
+        const element = q.element;
+        scores[element] += answers[q.id];
+        maxScores[element] += 5; // 各質問の最大値は5
+      });
+
+      // パーセント計算＆並べ替え
+      const resultList = Object.keys(scores).map(key => {
+        const raw = scores[key];
+        const max = maxScores[key] || 1;
+        const percent = Math.round(raw / max * 100);
+        return { key, raw, max, percent };
+      }).sort((a, b) => b.percent - a.percent);
+
+      // メインエレメント（1位）
+      const mainElement = resultList[0];
+      latestTalentElementKey = mainElement.key;
+
+      // 結果HTML生成
+      let html = "";
+
+      html += `<div class="result-title">才能エレメントのバランス</div>`;
+      html += `<p class="small">数字が高いほど、そのエレメントの才能を今よく使っている可能性が高いです。</p>`;
+
+      resultList.forEach((r, index) => {
+        html += `
+          <div class="axis-row">
+            <div class="axis-label">
+              ${index + 1}. ${elementDisplayNames[r.key]}
+            </div>
+            <div class="axis-bar-wrap">
+              <div class="axis-bar" style="width:${r.percent}%; background:#4b7bec;"></div>
+            </div>
+            <div class="axis-percent">${r.percent}%</div>
+          </div>
+        `;
+      });
+
+      html += `<p class="small">👉 あなたの<strong>メインエレメント</strong>は「<strong>${elementDisplayNames[mainElement.key]}</strong>」です。</p>`;
+      html += `<p class="small"><strong>${elementDisplayNames[mainElement.key]}</strong>：${elementDescriptions[mainElement.key]}</p>`;
+
+      talentResultDiv.innerHTML = html;
+      resultCard.style.display = "block";
+      resultCard.scrollIntoView({ behavior: "smooth" });
+    });
+
+    // 星×才能タイプの表示
+    const starElementSelect = document.getElementById("starElementSelect");
+    const astroResultBtn = document.getElementById("astroResultBtn");
+    const astroResultBox = document.getElementById("astroResultBox");
+
+    astroResultBtn.addEventListener("click", () => {
+      if (!latestTalentElementKey) {
+        astroResultBox.innerHTML = "<p>まずは上の診断で、才能エレメントの結果を出してみてください。</p>";
+        return;
+      }
+      const starElement = starElementSelect.value;
+      if (!starElement) {
+        astroResultBox.innerHTML = "<p>太陽星座のエレメントを選んでください。</p>";
+        return;
+      }
+
+      const key = `${latestTalentElementKey}-${starElement}`;
+      const typeData = talentStarTypes[key];
+
+      if (!typeData) {
+        astroResultBox.innerHTML = "<p>タイプの組み合わせが見つかりませんでした。</p>";
+        return;
+      }
+
+      const talentName = elementDisplayNames[latestTalentElementKey] || latestTalentElementKey;
+      const starLabel = {
+        FIRE: "FIRE（火）エレメント",
+        EARTH: "EARTH（土）エレメント",
+        AIR: "AIR（風）エレメント",
+        WATER: "WATER（水）エレメント"
+      }[starElement];
+
+      let html = "";
+      html += `<p class="small">才能エレメント：<strong>${talentName}</strong><br>`;
+      html += `太陽星座エレメント：<strong>${starLabel}</strong></p>`;
+      html += `<p><strong>あなたは「${typeData.title}」です。</strong><br>`;
+      html += `<span class="small">${typeData.oneLine}</span></p>`;
+
+      astroResultBox.innerHTML = html;
+    });
+  </script>
+
+</body>
+</html>
