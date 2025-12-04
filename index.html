@@ -120,7 +120,7 @@
       color: #3730a3;
       margin-left: 4px;
     }
-    select {
+    select, input[type="date"] {
       padding: 4px 8px;
       border-radius: 999px;
       border: 1px solid #ccc;
@@ -131,6 +131,7 @@
 </head>
 <body>
 
+  <!-- タイトル -->
   <div class="card">
     <h1>才能8軸診断＋星エレメント16タイプ（ベータ）</h1>
     <p class="small">
@@ -142,16 +143,35 @@
     </p>
   </div>
 
+  <!-- 生年月日入力（星とのかけ合わせ用） -->
+  <div class="card">
+    <div class="result-title">生年月日の入力（任意）</div>
+    <p class="small">
+      星とのかけ合わせ診断のために、生年月日を教えてください。<br>
+      ここからあなたの<strong>12星座</strong>と<strong>星のエレメント</strong>を読み取ります。
+    </p>
+    <p class="small">
+      生年月日：
+      <input type="date" id="birthDate">
+    </p>
+    <p class="small">
+      ※入力しなくても、才能8軸の結果は表示されます。<br>
+      ※生年月日を入れると「星×才能」の16タイプ結果と12星座メッセージが出ます。
+    </p>
+  </div>
+
+  <!-- 質問フォーム -->
   <form id="quizForm" class="card">
     <div id="questionsContainer"></div>
     <button type="submit">結果を見る</button>
     <p class="small">※すべての質問に回答してからボタンを押してください。</p>
   </form>
 
+  <!-- 結果表示 -->
   <div id="resultCard" class="card" style="display:none;">
     <div id="resultContent"></div>
 
-    <!-- シェアボタン -->
+    <!-- 結果シェア -->
     <div id="resultShare" style="margin-top:12px;">
       <button type="button" id="copyResultBtn">結果テキストをコピー</button>
       <button type="button" id="shareResultBtn">結果をシェア</button>
@@ -168,19 +188,8 @@
     <div id="astroSection">
       <div class="result-title">星と才能を合わせた16タイプ診断</div>
       <p class="small">
-        太陽星座のエレメントを選ぶと、星と才能を合わせた16タイプの結果が表示されます。<br>
-        例：牡羊・獅子・射手 → FIRE／牡牛・乙女・山羊 → EARTH／双子・天秤・水瓶 → AIR／蟹・蠍・魚 → WATER
-      </p>
-      <p class="small">
-        あなたの太陽星座のエレメント：
-        <select id="starElementSelect">
-          <option value="">選択してください</option>
-          <option value="FIRE">FIRE（牡羊・獅子・射手）</option>
-          <option value="EARTH">EARTH（牡牛・乙女・山羊）</option>
-          <option value="AIR">AIR（双子・天秤・水瓶）</option>
-          <option value="WATER">WATER（蟹・蠍・魚）</option>
-        </select>
-        <button type="button" id="astroResultBtn">タイプを見る</button>
+        生年月日から<strong>12星座</strong>と<strong>星のエレメント</strong>を判定し、才能エレメントとのかけ合わせでタイプを出します。<br>
+        ※生年月日を入力していない場合、「星×才能」の結果は表示されません。
       </p>
       <div id="astroResultBox" class="small" style="margin-top:10px;"></div>
     </div>
@@ -206,6 +215,9 @@
       R2: { id: "R2", label: "水のチーム軸",   domain: "WATER｜絆を育てる領域" }
     };
 
+    // 全8軸の表示順（説明用）
+    const axisOrder = ["X1","X2","I1","I2","T1","T2","R1","R2"];
+
     // ---- 4エレメントの説明 ----
     const domainDescriptions = {
       "EARTH｜形にする領域":
@@ -221,12 +233,12 @@
         "人の心や関係性に水をそそぎ、ゆっくりと絆を育てていくエリア。共感・サポート・チームワークを通して、安心できるつながりをつくる領域です。"
     };
 
-    // 4エレメント用の色（バー＆レーダーで使用）
+    // ---- 4エレメントの色（要望反映：EARTH=紫, AIR=緑, WATER=水色） ----
     const domainColors = {
-      "EARTH｜形にする領域": "#3B82F6",   // ブルー
+      "EARTH｜形にする領域": "#8B5CF6",   // パープル
       "FIRE｜人と場を動かす領域": "#F97316", // オレンジ
-      "AIR｜しくみを組む領域":   "#8B5CF6",   // パープル
-      "WATER｜絆を育てる領域":   "#22C55E"    // グリーン
+      "AIR｜しくみを組む領域":   "#22C55E",   // グリーン
+      "WATER｜絆を育てる領域":   "#38BDF8"    // 水色
     };
 
     // エレメントキー→表示名
@@ -245,7 +257,7 @@
       WATER: "WATER（水）エレメント"
     };
 
-    // 8軸の詳細説明
+    // ---- 8軸の詳細説明（全軸出す用） ----
     const axisDescriptions = {
       // EARTH
       X1: "大地に道や畑をつくるように、やることを整理して流れや手順を組み立てる力。段取りや仕組み化で「進みやすい道」をつくる軸です。",
@@ -264,7 +276,58 @@
       R2: "いくつもの小さな流れをひとつの川にまとめるように、人と人・チームとチームをつなぎ、協力しやすい場をつくる力。調整・チームワークの軸です。"
     };
 
-    // 才能エレメント × 星エレメント → 16タイプ定義
+    // ---- 12星座データ（星側のメッセージ用） ----
+    const zodiacInfos = {
+      ARIES:   { id:"ARIES",   name:"牡羊座", element:"FIRE",  description:"スタートダッシュ・チャレンジ精神・率直さがテーマになりやすい星座です。" },
+      TAURUS:  { id:"TAURUS",  name:"牡牛座", element:"EARTH", description:"五感の心地よさや安定感、マイペースさを大切にする星座です。" },
+      GEMINI:  { id:"GEMINI",  name:"双子座", element:"AIR",   description:"好奇心旺盛で、情報や会話を通じて世界を広げていく星座です。" },
+      CANCER:  { id:"CANCER",  name:"蟹座",   element:"WATER", description:"身近な人や居場所を守り、あたたかい関係性を育てる星座です。" },
+      LEO:     { id:"LEO",     name:"獅子座", element:"FIRE",  description:"自己表現やドラマチックさを通して、周りを照らしていく星座です。" },
+      VIRGO:   { id:"VIRGO",   name:"乙女座", element:"EARTH", description:"細やかな気配りと実務力で、現場を整えることに長けた星座です。" },
+      LIBRA:   { id:"LIBRA",   name:"天秤座", element:"AIR",   description:"バランス感覚と対話力で、人と人の間をつないでいく星座です。" },
+      SCORPIO: { id:"SCORPIO", name:"蠍座",   element:"WATER", description:"物事や人と深く向き合い、本質に迫っていく力を持つ星座です。" },
+      SAGITTARIUS:{id:"SAGITTARIUS",name:"射手座",element:"FIRE",description:"自由な探究心とスケールの大きなビジョンで、世界を広げていく星座です。"},
+      CAPRICORN:{ id:"CAPRICORN",name:"山羊座", element:"EARTH",description:"目的達成に向けて、長期的にコツコツ積み上げていく星座です。" },
+      AQUARIUS:{ id:"AQUARIUS", name:"水瓶座", element:"AIR",   description:"既存の枠にとらわれず、新しい価値観やつながりを生み出す星座です。" },
+      PISCES:  { id:"PISCES",  name:"魚座",   element:"WATER", description:"感受性が豊かで、境界を超えて共感し、癒しをもたらす星座です。" }
+    };
+
+    // 生年月日 → 12星座判定
+    function getZodiacFromBirthdate(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split("-");
+      if (parts.length < 3) return null;
+      const month = parseInt(parts[1], 10);
+      const day   = parseInt(parts[2], 10);
+      if (!month || !day) return null;
+
+      // 境界は一般的な西洋占星術の区分
+      if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return zodiacInfos.ARIES;
+      if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return zodiacInfos.TAURUS;
+      if ((month === 5 && day >= 21) || (month === 6 && day <= 21)) return zodiacInfos.GEMINI;
+      if ((month === 6 && day >= 22) || (month === 7 && day <= 22)) return zodiacInfos.CANCER;
+      if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return zodiacInfos.LEO;
+      if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return zodiacInfos.VIRGO;
+      if ((month === 9 && day >= 23) || (month === 10 && day <= 23)) return zodiacInfos.LIBRA;
+      if ((month === 10 && day >= 24) || (month === 11 && day <= 22)) return zodiacInfos.SCORPIO;
+      if ((month === 11 && day >= 23) || (month === 12 && day <= 21)) return zodiacInfos.SAGITTARIUS;
+      if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return zodiacInfos.CAPRICORN;
+      if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return zodiacInfos.AQUARIUS;
+      if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return zodiacInfos.PISCES;
+      return null;
+    }
+
+    // ドメイン名からエレメントキーを取り出す（EARTH/FIRE/AIR/WATER）
+    function getElementKeyFromDomainName(domainName) {
+      if (!domainName) return null;
+      if (domainName.startsWith("EARTH")) return "EARTH";
+      if (domainName.startsWith("FIRE"))  return "FIRE";
+      if (domainName.startsWith("AIR"))   return "AIR";
+      if (domainName.startsWith("WATER")) return "WATER";
+      return null;
+    }
+
+    // ---- 才能エレメント × 星エレメント → 16タイプ定義 ----
     const talentStarTypes = {
       "EARTH-EARTH": {
         title: "畑を耕す実行派タイプ",
@@ -276,7 +339,7 @@
       },
       "EARTH-AIR": {
         title: "設計図から形にする実行タイプ",
-       oneLine: "頭の中のプランや構造を、そのまま現実の仕組みに落としていく人。"
+        oneLine: "頭の中のプランや構造を、そのまま現実の仕組みに落としていく人。"
       },
       "EARTH-WATER": {
         title: "思いやりで現場を整える実行タイプ",
@@ -335,14 +398,19 @@
       }
     };
 
-    // ドメイン名からエレメントキーを取り出す
-    function getElementKeyFromDomainName(domainName) {
-      if (!domainName) return null;
-      if (domainName.startsWith("EARTH")) return "EARTH";
-      if (domainName.startsWith("FIRE"))  return "FIRE";
-      if (domainName.startsWith("AIR"))   return "AIR";
-      if (domainName.startsWith("WATER")) return "WATER";
-      return null;
+    // 上位3軸の掛け合わせメッセージ（約200文字イメージ）
+    function buildTop3CombinationMessage(top3) {
+      if (!top3 || top3.length === 0) return "";
+      const names = top3.map(a => a.label);
+      const mainDomain = top3[0].domain; // 例：EARTH｜形にする領域
+
+      return `あなたの今のメイン才能は「${names.join("」「")}」の3つです。${mainDomain}を土台に、この3つを組み合わせて使うとき、あなたらしさがいちばん自然にあふれます。日常のどんな場面でこの3つを使っているか、ぜひ思い出してみてください。`;
+    }
+
+    // 星×才能のかけ合わせメッセージ
+    function buildZodiacTalentMessage(zodiac, talentName) {
+      if (!zodiac || !talentName) return "";
+      return `「${zodiac.name}」が持つテーマに「${talentName}」のエネルギーが重なることで、あなたは自分らしい形で才能を発揮しやすいタイプです。星の気質を否定せず、そのまま活かすつもりで、強みが活きる環境や関わり方を選んでみてください。`;
     }
 
     // ---- 質問定義（48問） ----
@@ -412,9 +480,23 @@
       { id: 48, axis: "R2", text: "会議や作業の前後に、メンバーに声をかけてフォローすることが多い。" }
     ];
 
-    // ---- 質問描画 ----
-    const container = document.getElementById("questionsContainer");
+    // ---- DOM取得 ----
+    const container       = document.getElementById("questionsContainer");
+    const form            = document.getElementById("quizForm");
+    const resultCard      = document.getElementById("resultCard");
+    const resultContent   = document.getElementById("resultContent");
+    const shareDiv        = document.getElementById("resultShare");
+    const copyBtn         = document.getElementById("copyResultBtn");
+    const shareBtn        = document.getElementById("shareResultBtn");
+    const shareMsg        = document.getElementById("shareMessage");
+    const birthDateInput  = document.getElementById("birthDate");
+    const astroResultBox  = document.getElementById("astroResultBox");
 
+    let radarChart        = null;
+    let latestShareText   = "";
+    let latestTalentElementKey = null; // EARTH/FIRE/AIR/WATER
+
+    // ---- 質問描画 ----
     questions.forEach((q, index) => {
       const wrap = document.createElement("div");
       wrap.className = "question";
@@ -452,18 +534,6 @@
     });
 
     // ---- 採点処理 ----
-    const form = document.getElementById("quizForm");
-    const resultCard = document.getElementById("resultCard");
-    const resultContent = document.getElementById("resultContent");
-    let radarChart = null;
-    let latestShareText = "";
-    let latestTalentElementKey = null; // EARTH/FIRE/AIR/WATER
-
-    const shareDiv = document.getElementById("resultShare");
-    const copyBtn = document.getElementById("copyResultBtn");
-    const shareBtn = document.getElementById("shareResultBtn");
-    const shareMsg = document.getElementById("shareMessage");
-
     form.addEventListener("submit", function (e) {
       e.preventDefault();
 
@@ -543,6 +613,7 @@
       // 結果HTML生成
       let html = "";
 
+      // 4エレメント
       html += `<div class="result-title">4エレメントのバランス</div>`;
       html += `<p class="small">数字が高いほど、そのエレメントの才能を今よく使っている可能性が高いです。</p>`;
 
@@ -570,6 +641,18 @@
         ).join("<br>")
       }</p>`;
 
+      // 4エレメントと8軸の関係を見せる
+      html += `<hr style="margin:14px 0;">`;
+      html += `<div class="result-title">4エレメントと8軸のつながり</div>`;
+      html += `<p class="small">
+        各エレメントは、次の2つの軸で構成されています。<br>
+        EARTH：大地のデザイン軸／大地の実行軸<br>
+        FIRE：火の発信軸／火の推進軸<br>
+        AIR：風の分析軸／風の探究軸<br>
+        WATER：水の共感軸／水のチーム軸
+      </p>`;
+
+      // 8軸結果
       html += `<hr style="margin:14px 0;">`;
       html += `<div class="result-title">8軸の結果（上位3つが今のメイン才能）</div>`;
 
@@ -590,6 +673,7 @@
         `;
       });
 
+      // 上位3軸の個別解説
       html += `<hr style="margin:14px 0;">`;
       html += `<div class="result-title">上位3軸の解説</div>`;
       top3.forEach(a => {
@@ -601,12 +685,29 @@
         `;
       });
 
+      // 上位3軸の掛け合わせメッセージ
+      const comboMsg = buildTop3CombinationMessage(top3);
+      html += `<p class="small"><strong>3つの掛け合わせメッセージ：</strong><br>${comboMsg}</p>`;
+
+      // 全8軸の解説
+      html += `<hr style="margin:14px 0;">`;
+      html += `<div class="result-title">全8軸の解説</div>`;
+      axisOrder.forEach(axisId => {
+        const meta = axes[axisId];
+        html += `
+          <p>
+            <strong>${meta.label}</strong>（${meta.domain}）<br>
+            <span class="small">${axisDescriptions[axisId] || ""}</span>
+          </p>
+        `;
+      });
+
       html += `<p class="small">※この結果は、あくまで「今のあなたがよく使っている才能のパターン」です。<br>しっくりくるところ・意外だったところをメモしながら、自分の経験と照らし合わせてみてください。</p>`;
 
       resultContent.innerHTML = html;
       resultCard.style.display = "block";
 
-      // シェア用テキスト
+      // シェア用テキスト（URLは現在のページURL）
       let shareText = "【才能8軸診断＋エレメント結果】\n\n";
 
       shareText += "■ 4エレメントのバランス\n";
@@ -620,7 +721,7 @@
       });
 
       shareText += "\n診断ツールはこちら：\n";
-      shareText += "https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/\n"; // ← ここはあとで書き換えてOK
+      shareText += window.location.href + "\n";
 
       latestShareText = shareText;
       shareMsg.textContent = "";
@@ -629,8 +730,6 @@
       const ctx = document.getElementById("domainRadar").getContext("2d");
       const labels = domainResultList.map(d => d.domain);
       const data = domainResultList.map(d => d.percent);
-      const bgColors = domainResultList.map(d => (domainColors[d.domain] || "#4b7bec") + "33");
-      const borderColors = domainResultList.map(d => domainColors[d.domain] || "#4b7bec");
 
       if (radarChart) {
         radarChart.data.labels = labels;
@@ -645,9 +744,9 @@
               label: "エレメントバランス",
               data: data,
               fill: true,
-              backgroundColor: "rgba(75, 123, 236, 0.15)",
-              borderColor: "rgba(75, 123, 236, 1)",
-              pointBackgroundColor: "rgba(75, 123, 236, 1)"
+              backgroundColor: "rgba(139, 92, 246, 0.15)",
+              borderColor: "rgba(139, 92, 246, 1)",
+              pointBackgroundColor: "rgba(139, 92, 246, 1)"
             }]
           },
           options: {
@@ -663,10 +762,13 @@
         });
       }
 
+      // 星×才能の結果更新
+      updateAstroResult();
+
       resultCard.scrollIntoView({ behavior: "smooth" });
     });
 
-    // シェアボタンの動き
+    // シェアボタン
     copyBtn.onclick = async () => {
       if (!latestShareText) {
         shareMsg.textContent = "先に診断を完了してね。";
@@ -700,40 +802,60 @@
       }
     };
 
-    // 星×才能 16タイプ表示
-    const starElementSelect = document.getElementById("starElementSelect");
-    const astroResultBtn = document.getElementById("astroResultBtn");
-    const astroResultBox = document.getElementById("astroResultBox");
-
-    astroResultBtn.addEventListener("click", () => {
+    // 星×才能 16タイプ表示（生年月日＆才能エレメントがそろったら）
+    function updateAstroResult() {
       if (!latestTalentElementKey) {
-        astroResultBox.innerHTML = "<p>まずは上の診断で、才能エレメントの結果を出してみてください。</p>";
-        return;
-      }
-      const starElement = starElementSelect.value;
-      if (!starElement) {
-        astroResultBox.innerHTML = "<p>太陽星座のエレメントを選んでください。</p>";
+        astroResultBox.innerHTML = "<p>まずは上の診断で、才能8軸の結果を出してみてください。</p>";
         return;
       }
 
-      const key = `${latestTalentElementKey}-${starElement}`;
-      const typeData = talentStarTypes[key];
+      const dateStr = birthDateInput.value;
+      if (!dateStr) {
+        astroResultBox.innerHTML = "<p>生年月日を入力すると、12星座と星エレメントを使った「星×才能」の結果が表示されます。</p>";
+        return;
+      }
+
+      const zodiac = getZodiacFromBirthdate(dateStr);
+      if (!zodiac) {
+        astroResultBox.innerHTML = "<p>生年月日を正しく入力できているか確認してみてください。</p>";
+        return;
+      }
+
+      const typeKey = `${latestTalentElementKey}-${zodiac.element}`;
+      const typeData = talentStarTypes[typeKey];
 
       if (!typeData) {
-        astroResultBox.innerHTML = "<p>タイプの組み合わせが見つかりませんでした。</p>";
+        astroResultBox.innerHTML = "<p>星と才能の組み合わせ結果が見つかりませんでした。</p>";
         return;
       }
 
       const talentName = elementDisplayNames[latestTalentElementKey] || latestTalentElementKey;
-      const starLabel = starElementLabels[starElement] || starElement;
+      const starElementLabel = starElementLabels[zodiac.element] || "";
+
+      const comboMessage = buildZodiacTalentMessage(zodiac, talentName);
 
       let html = "";
-      html += `<p class="small">才能エレメント：<strong>${talentName}</strong><br>`;
-      html += `太陽星座エレメント：<strong>${starLabel}</strong></p>`;
-      html += `<p><strong>あなたは「${typeData.title}」です。</strong><br>`;
-      html += `<span class="small">${typeData.oneLine}</span></p>`;
+      html += `<p class="small">
+        太陽星座：<strong>${zodiac.name}</strong><br>
+        星のエレメント：<strong>${starElementLabel}</strong><br>
+        才能エレメント（診断結果）：<strong>${talentName}</strong>
+      </p>`;
+
+      html += `<p class="small">🌙 12星座から見るテーマ：${zodiac.description}</p>`;
+
+      html += `<p><strong>星と才能を合わせたタイプ：${typeData.title}</strong><br>
+        <span class="small">${typeData.oneLine}</span></p>`;
+
+      html += `<p class="small">✨ 星×才能のかけ合わせメッセージ：${comboMessage}</p>`;
 
       astroResultBox.innerHTML = html;
+    }
+
+    // 生年月日をあとから変えたときにも、すでに結果が出ていれば再計算
+    birthDateInput.addEventListener("change", () => {
+      if (latestTalentElementKey) {
+        updateAstroResult();
+      }
     });
   </script>
 
