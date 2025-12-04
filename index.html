@@ -2,8 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>才能×ホロスコープ 16タイプ診断（ライト版）</title>
+  <title>才能8軸診断＋星エレメント16タイプ（ベータ）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- レーダーチャート用：Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
@@ -24,10 +27,6 @@
       padding: 16px 18px;
       margin: 12px 0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-    .small {
-      font-size: 0.85rem;
-      color: #555;
     }
     .question {
       margin-bottom: 16px;
@@ -76,6 +75,14 @@
       opacity: 0.6;
       cursor: default;
     }
+    .small {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
     .axis-row {
       display: flex;
       align-items: center;
@@ -104,6 +111,15 @@
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      margin-left: 4px;
+    }
     select {
       padding: 4px 8px;
       border-radius: 999px;
@@ -111,39 +127,46 @@
       font-size: 0.9rem;
       margin-left: 4px;
     }
-    .result-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h1>才能×ホロスコープ 16タイプ診断（ライト版）</h1>
+    <h1>才能8軸診断＋星エレメント16タイプ（ベータ）</h1>
     <p class="small">
-      この診断では、まず<strong>4つの才能エレメント</strong>（EARTH／FIRE／AIR／WATER）の中で、<br>
-      あなたが今いちばん使っているエレメントをざっくりチェックします。<br>
-      そのあと<strong>太陽星座のエレメント</strong>を選ぶと、星と才能を合わせた16タイプの結果が表示されます。
+      あなたの中にある<strong>4つのエレメント</strong>（EARTH／FIRE／AIR／WATER）を、さらに8つの軸に分けて見ていきます。<br>
+      48個の質問に、直感で1〜5を選んでください。
     </p>
     <p class="small">
-      各質問について、「1：まったく当てはまらない」〜「5：とても当てはまる」で答えてください。
+      1：まったく当てはまらない／2：あまり当てはまらない／3：どちらともいえない／4：かなり当てはまる／5：とても当てはまる
     </p>
   </div>
 
   <form id="quizForm" class="card">
     <div id="questionsContainer"></div>
-    <button type="submit">才能エレメントの結果を見る</button>
+    <button type="submit">結果を見る</button>
     <p class="small">※すべての質問に回答してからボタンを押してください。</p>
   </form>
 
   <div id="resultCard" class="card" style="display:none;">
-    <div id="talentResult"></div>
+    <div id="resultContent"></div>
 
+    <!-- シェアボタン -->
+    <div id="resultShare" style="margin-top:12px;">
+      <button type="button" id="copyResultBtn">結果テキストをコピー</button>
+      <button type="button" id="shareResultBtn">結果をシェア</button>
+      <p id="shareMessage" class="small"></p>
+    </div>
+
+    <hr style="margin:14px 0;">
+    <div class="result-title">4エレメントのレーダーチャート</div>
+    <p class="small">全体のバランスを感覚的に眺めてみてください。</p>
+    <canvas id="domainRadar" style="max-width: 100%;"></canvas>
+
+    <!-- 星と才能のタイプ診断 -->
     <hr style="margin:16px 0;">
-
     <div id="astroSection">
-      <div class="result-title">星と才能を合わせたタイプ診断</div>
+      <div class="result-title">星と才能を合わせた16タイプ診断</div>
       <p class="small">
         太陽星座のエレメントを選ぶと、星と才能を合わせた16タイプの結果が表示されます。<br>
         例：牡羊・獅子・射手 → FIRE／牡牛・乙女・山羊 → EARTH／双子・天秤・水瓶 → AIR／蟹・蠍・魚 → WATER
@@ -164,7 +187,49 @@
   </div>
 
   <script>
-    // 才能エレメントの表示名
+    // ---- 8軸定義（エレメント版） ----
+    const axes = {
+      // EARTH：形にする領域
+      X1: { id: "X1", label: "大地のデザイン軸", domain: "EARTH｜形にする領域" },
+      X2: { id: "X2", label: "大地の実行軸",   domain: "EARTH｜形にする領域" },
+
+      // FIRE：人と場を動かす領域
+      I1: { id: "I1", label: "火の発信軸",     domain: "FIRE｜人と場を動かす領域" },
+      I2: { id: "I2", label: "火の推進軸",     domain: "FIRE｜人と場を動かす領域" },
+
+      // AIR：しくみを組む領域
+      T1: { id: "T1", label: "風の分析軸",     domain: "AIR｜しくみを組む領域" },
+      T2: { id: "T2", label: "風の探究軸",     domain: "AIR｜しくみを組む領域" },
+
+      // WATER：絆を育てる領域
+      R1: { id: "R1", label: "水の共感軸",     domain: "WATER｜絆を育てる領域" },
+      R2: { id: "R2", label: "水のチーム軸",   domain: "WATER｜絆を育てる領域" }
+    };
+
+    // ---- 4エレメントの説明 ----
+    const domainDescriptions = {
+      "EARTH｜形にする領域":
+        "現実世界で一歩ずつ「形にしていく」エリア。計画を立てる・段取りする・やり切ることで、アイデアを現実の結果につなげていく領域です。",
+
+      "FIRE｜人と場を動かす領域":
+        "言葉や存在感で、人と場に火を灯すエリア。発信・説得・リーダーシップなどを通して、エネルギーを生み出し、周りを動かしていく領域です。",
+
+      "AIR｜しくみを組む領域":
+        "一歩引いた視点で全体を見渡し、「しくみ」や「意味」を組み立てるエリア。分析・学び・戦略づくりで、本質をとらえていく領域です。",
+
+      "WATER｜絆を育てる領域":
+        "人の心や関係性に水をそそぎ、ゆっくりと絆を育てていくエリア。共感・サポート・チームワークを通して、安心できるつながりをつくる領域です。"
+    };
+
+    // 4エレメント用の色（バー＆レーダーで使用）
+    const domainColors = {
+      "EARTH｜形にする領域": "#3B82F6",   // ブルー
+      "FIRE｜人と場を動かす領域": "#F97316", // オレンジ
+      "AIR｜しくみを組む領域":   "#8B5CF6",   // パープル
+      "WATER｜絆を育てる領域":   "#22C55E"    // グリーン
+    };
+
+    // エレメントキー→表示名
     const elementDisplayNames = {
       EARTH: "EARTH｜形にする領域",
       FIRE:  "FIRE｜人と場を動かす領域",
@@ -172,12 +237,31 @@
       WATER: "WATER｜絆を育てる領域"
     };
 
-    // 才能エレメントの説明
-    const elementDescriptions = {
-      EARTH: "計画を立てる・段取りを組む・コツコツやり切ることで、アイデアを現実の形にしていくエレメントです。",
-      FIRE:  "発信・リーダーシップ・盛り上げ役など、人と場を動かすことで、流れを作っていくエレメントです。",
-      AIR:   "情報を集めて整理したり、しくみやルールを考えたりしながら、本質をつかむエレメントです。",
-      WATER: "人の気持ちや場の雰囲気に敏感で、安心できるつながりやチームワークを大切にするエレメントです。"
+    // 星エレメントの表示
+    const starElementLabels = {
+      FIRE:  "FIRE（火）エレメント",
+      EARTH: "EARTH（土）エレメント",
+      AIR:   "AIR（風）エレメント",
+      WATER: "WATER（水）エレメント"
+    };
+
+    // 8軸の詳細説明
+    const axisDescriptions = {
+      // EARTH
+      X1: "大地に道や畑をつくるように、やることを整理して流れや手順を組み立てる力。段取りや仕組み化で「進みやすい道」をつくる軸です。",
+      X2: "いちど植えた種を収穫まで育てきる農家さんのように、決めたことをコツコツ実行し、最後までやり切る力。完了させるところで力を発揮する軸です。",
+
+      // FIRE
+      I1: "暗い場所にパッと火を灯す焚き火のように、場を明るくしたり、自分を表現したりする力。存在感や発信でエネルギーを動かす軸です。",
+      I2: "小さな火種をキャンプファイヤーに育てるように、人を巻き込みながら物事を推し進める力。説得力やリーダーシップで場を動かす軸です。",
+
+      // AIR
+      T1: "高いところから風に乗って全体を見渡すように、情報や出来事を構造的にとらえる力。ロジカルに分析し、リスクやパターンを読み取る軸です。",
+      T2: "風のようにあちこちを巡りながら、知識や経験を集めてくる力。好奇心をエンジンに、学び・探究を深めていく軸です。",
+
+      // WATER
+      R1: "乾いたところに水がしみ込むように、人の気持ちにそっと寄りそい、安心感をもたらす力。共感・ケアを通して、心を潤す軸です。",
+      R2: "いくつもの小さな流れをひとつの川にまとめるように、人と人・チームとチームをつなぎ、協力しやすい場をつくる力。調整・チームワークの軸です。"
     };
 
     // 才能エレメント × 星エレメント → 16タイプ定義
@@ -192,7 +276,7 @@
       },
       "EARTH-AIR": {
         title: "設計図から形にする実行タイプ",
-        oneLine: "頭の中のプランや構造を、そのまま現実の仕組みに落としていく人。"
+       oneLine: "頭の中のプランや構造を、そのまま現実の仕組みに落としていく人。"
       },
       "EARTH-WATER": {
         title: "思いやりで現場を整える実行タイプ",
@@ -251,31 +335,85 @@
       }
     };
 
-    // 才能診断用の質問（各エレメント3問ずつ・計12問のライト版）
+    // ドメイン名からエレメントキーを取り出す
+    function getElementKeyFromDomainName(domainName) {
+      if (!domainName) return null;
+      if (domainName.startsWith("EARTH")) return "EARTH";
+      if (domainName.startsWith("FIRE"))  return "FIRE";
+      if (domainName.startsWith("AIR"))   return "AIR";
+      if (domainName.startsWith("WATER")) return "WATER";
+      return null;
+    }
+
+    // ---- 質問定義（48問） ----
     const questions = [
-      // EARTH
-      { id: 1, element: "EARTH", text: "計画やスケジュールを立ててから動くことが多い。" },
-      { id: 2, element: "EARTH", text: "コツコツ続ける作業や、地道な積み上げはわりと得意だ。" },
-      { id: 3, element: "EARTH", text: "「最後までやり切ること」にわりとこだわる方だと思う。" },
+      // X1 大地のデザイン軸
+      { id: 1, axis: "X1", text: "やることを紙やアプリにリスト化してから行動することが多い。" },
+      { id: 2, axis: "X1", text: "物事を進める前に、手順や流れを整理したくなる。" },
+      { id: 3, axis: "X1", text: "「この順番でやると効率がいい」と考えながら動いている。" },
+      { id: 4, axis: "X1", text: "仕事や家事のやり方を、もっと楽になるように工夫するのが好きだ。" },
+      { id: 5, axis: "X1", text: "みんなが迷わないように、ルールや仕組みを整えたくなる。" },
+      { id: 6, axis: "X1", text: "ゴールから逆算してスケジュールを組むのが得意だと感じる。" },
 
-      // FIRE
-      { id: 4, element: "FIRE", text: "おもしろそうなことがあると、すぐに「やってみたい！」と思う。" },
-      { id: 5, element: "FIRE", text: "人前で話したり、自分の考えを発信することにあまり抵抗がない。" },
-      { id: 6, element: "FIRE", text: "場が静かすぎると、つい盛り上げ役になってしまうことがある。" },
+      // X2 大地の実行軸
+      { id: 7, axis: "X2", text: "途中で投げ出すのが嫌で、つい最後までやり切ってしまう。" },
+      { id: 8, axis: "X2", text: "締め切りが近づくと、むしろ集中力が高まるほうだ。" },
+      { id: 9, axis: "X2", text: "「途中までやって放置」が気持ち悪く感じる。" },
+      { id: 10, axis: "X2", text: "大変でも、一度引き受けたことはやり遂げたいと思う。" },
+      { id: 11, axis: "X2", text: "人から頼まれたことを忘れないよう、きちんと終わらせようとする。" },
+      { id: 12, axis: "X2", text: "長期的なプロジェクトでも、コツコツ続けることができる。" },
 
-      // AIR
-      { id: 7, element: "AIR", text: "考えごとをするとき、メモやノートに整理して書き出すのが好きだ。" },
-      { id: 8, element: "AIR", text: "情報や話を聞いたとき、「結局いちばん大事なのはどこ？」と考える。" },
-      { id: 9, element: "AIR", text: "仕組みやルールを整えたり改善したりすることに興味がある。" },
+      // I1 火の発信軸
+      { id: 13, axis: "I1", text: "人前で話すことに、そこまで強い抵抗はない。" },
+      { id: 14, axis: "I1", text: "自分の考えや経験を、SNSやブログなどで発信したくなる。" },
+      { id: 15, axis: "I1", text: "場が静かすぎると、つい話題を振ったり盛り上げたりしてしまう。" },
+      { id: 16, axis: "I1", text: "自分の意見をハッキリ言う方だと思う。" },
+      { id: 17, axis: "I1", text: "初対面の人とも、わりとすぐに会話を広げられる。" },
+      { id: 18, axis: "I1", text: "「あなたがいると場の雰囲気が明るくなる」と言われたことがある。" },
 
-      // WATER
-      { id: 10, element: "WATER", text: "人の表情や声のトーンから、気持ちの変化に気づきやすいと思う。" },
-      { id: 11, element: "WATER", text: "誰かがしんどそうにしていると、つい声をかけたくなる。" },
-      { id: 12, element: "WATER", text: "安心して話せる場や関係性を大事にしたいと感じる。" }
+      // I2 火の推進軸
+      { id: 19, axis: "I2", text: "みんなの意見を聞いたうえで、「じゃあこうしよう」と方向性を示すことが多い。" },
+      { id: 20, axis: "I2", text: "企画やアイデアを、人に分かりやすくプレゼンするのが好きだ。" },
+      { id: 21, axis: "I2", text: "相手に納得してもらえる説明の仕方を考えるのが得意だ。" },
+      { id: 22, axis: "I2", text: "チームや周囲を巻き込みながら、物事を前に進めるのが好きだ。" },
+      { id: 23, axis: "I2", text: "自分がいいと思ったものは、人にも勧めたくなる。" },
+      { id: 24, axis: "I2", text: "会議や話し合いで、最終的に結論をまとめる役割になることが多い。" },
+
+      // T1 風の分析軸
+      { id: 25, axis: "T1", text: "情報を聞いたとき「なぜそうなるのか？」を考えたくなる。" },
+      { id: 26, axis: "T1", text: "問題が起きると、原因を分析して再発防止策を考える。" },
+      { id: 27, axis: "T1", text: "データや数字を見て判断するのが好きだ。" },
+      { id: 28, axis: "T1", text: "物事のメリット・デメリットを整理してから決めたいタイプだ。" },
+      { id: 29, axis: "T1", text: "複雑な話を構造化して、図や箇条書きでまとめるのが得意だ。" },
+      { id: 30, axis: "T1", text: "先のリスクや抜け漏れに、比較的早く気づく方だ。" },
+
+      // T2 風の探究軸
+      { id: 31, axis: "T2", text: "興味を持ったテーマは、ネットや本で徹底的に調べたくなる。" },
+      { id: 32, axis: "T2", text: "学びのための講座や本に、お金や時間を使うことに抵抗が少ない。" },
+      { id: 33, axis: "T2", text: "「なぜ？」「どういう仕組み？」と深く掘り下げて考えるのが好きだ。" },
+      { id: 34, axis: "T2", text: "一度ハマった分野については、人より詳しくなりがちだ。" },
+      { id: 35, axis: "T2", text: "新しい知識や考え方に触れるとワクワクする。" },
+      { id: 36, axis: "T2", text: "学んだことを自分なりに整理して、メモやノートにまとめることが多い。" },
+
+      // R1 水の共感軸
+      { id: 37, axis: "R1", text: "人の表情や声のトーンから、気持ちの変化に敏感だと思う。" },
+      { id: 38, axis: "R1", text: "悩んでいる人の話を聞くと、つい親身になってしまう。" },
+      { id: 39, axis: "R1", text: "相手が傷つかないような言い方を選びがちだ。" },
+      { id: 40, axis: "R1", text: "相談されることが多い方だ。" },
+      { id: 41, axis: "R1", text: "相手の立場に立って考える癖がある。" },
+      { id: 42, axis: "R1", text: "誰かが疎外されている雰囲気に気づくと、放っておけない。" },
+
+      // R2 水のチーム軸
+      { id: 43, axis: "R2", text: "一人でやるより、誰かと一緒に進める方がやる気が出る。" },
+      { id: 44, axis: "R2", text: "チームのメンバーそれぞれの強みや個性を意識して見ている。" },
+      { id: 45, axis: "R2", text: "役割分担やスケジュールを調整することが多い。" },
+      { id: 46, axis: "R2", text: "場の空気がギスギスしていると、なんとか和らげたくなる。" },
+      { id: 47, axis: "R2", text: "みんなが気持ちよく働けるように、裏でサポートするのが得意だ。" },
+      { id: 48, axis: "R2", text: "会議や作業の前後に、メンバーに声をかけてフォローすることが多い。" }
     ];
 
-    // 質問の描画
-    const questionsContainer = document.getElementById("questionsContainer");
+    // ---- 質問描画 ----
+    const container = document.getElementById("questionsContainer");
 
     questions.forEach((q, index) => {
       const wrap = document.createElement("div");
@@ -310,23 +448,30 @@
       }
 
       wrap.appendChild(options);
-      questionsContainer.appendChild(wrap);
+      container.appendChild(wrap);
     });
 
-    const quizForm = document.getElementById("quizForm");
+    // ---- 採点処理 ----
+    const form = document.getElementById("quizForm");
     const resultCard = document.getElementById("resultCard");
-    const talentResultDiv = document.getElementById("talentResult");
+    const resultContent = document.getElementById("resultContent");
+    let radarChart = null;
+    let latestShareText = "";
+    let latestTalentElementKey = null; // EARTH/FIRE/AIR/WATER
 
-    let latestTalentElementKey = null; // 才能エレメント（FIRE/EARTH/AIR/WATER）のキーを保存
+    const shareDiv = document.getElementById("resultShare");
+    const copyBtn = document.getElementById("copyResultBtn");
+    const shareBtn = document.getElementById("shareResultBtn");
+    const shareMsg = document.getElementById("shareMessage");
 
-    quizForm.addEventListener("submit", function(e) {
+    form.addEventListener("submit", function (e) {
       e.preventDefault();
 
       const answers = {};
       let allAnswered = true;
 
       questions.forEach(q => {
-        const selected = quizForm.querySelector(`input[name="q${q.id}"]:checked`);
+        const selected = form.querySelector(`input[name="q${q.id}"]:checked`);
         if (!selected) {
           allAnswered = false;
         } else {
@@ -339,67 +484,223 @@
         return;
       }
 
-      // エレメントごとのスコア集計
-      const scores = {
-        EARTH: 0,
-        FIRE: 0,
-        AIR: 0,
-        WATER: 0
-      };
-      const maxScores = {
-        EARTH: 0,
-        FIRE: 0,
-        AIR: 0,
-        WATER: 0
-      };
-
-      questions.forEach(q => {
-        const element = q.element;
-        scores[element] += answers[q.id];
-        maxScores[element] += 5; // 各質問の最大値は5
+      // 軸ごとのスコアと最大値
+      const axisScores = {};
+      const axisMax = {};
+      Object.keys(axes).forEach(axisId => {
+        axisScores[axisId] = 0;
+        axisMax[axisId] = 0;
       });
 
-      // パーセント計算＆並べ替え
-      const resultList = Object.keys(scores).map(key => {
-        const raw = scores[key];
-        const max = maxScores[key] || 1;
+      questions.forEach(q => {
+        const axisId = q.axis;
+        axisScores[axisId] += answers[q.id];
+        axisMax[axisId] += 5; // 各質問の最大値は5
+      });
+
+      // ドメイン（エレメント）集計
+      const domainScores = {};
+      const domainMax = {};
+      Object.values(axes).forEach(a => {
+        if (!domainScores[a.domain]) {
+          domainScores[a.domain] = 0;
+          domainMax[a.domain] = 0;
+        }
+        domainScores[a.domain] += axisScores[a.id];
+        domainMax[a.domain] += axisMax[a.id];
+      });
+
+      // 軸スコア→％＆並べ替え
+      const axisResultList = Object.keys(axes).map(axisId => {
+        const meta = axes[axisId];
+        const raw = axisScores[axisId];
+        const max = axisMax[axisId] || 1;
         const percent = Math.round(raw / max * 100);
-        return { key, raw, max, percent };
+        return {
+          id: axisId,
+          label: meta.label,
+          domain: meta.domain,
+          rawScore: raw,
+          percent,
+          max
+        };
       }).sort((a, b) => b.percent - a.percent);
 
-      // メインエレメント（1位）
-      const mainElement = resultList[0];
-      latestTalentElementKey = mainElement.key;
+      const top3 = axisResultList.slice(0, 3);
+
+      // ドメインスコア→％
+      const domainResultList = Object.keys(domainScores).map(domainName => {
+        const raw = domainScores[domainName];
+        const max = domainMax[domainName] || 1;
+        const percent = Math.round(raw / max * 100);
+        return { domain: domainName, rawScore: raw, max, percent };
+      }).sort((a, b) => b.percent - a.percent);
+
+      // メインエレメントを保存（星×才能用）
+      const mainDomain = domainResultList[0];
+      latestTalentElementKey = getElementKeyFromDomainName(mainDomain.domain);
 
       // 結果HTML生成
       let html = "";
 
-      html += `<div class="result-title">才能エレメントのバランス</div>`;
+      html += `<div class="result-title">4エレメントのバランス</div>`;
       html += `<p class="small">数字が高いほど、そのエレメントの才能を今よく使っている可能性が高いです。</p>`;
 
-      resultList.forEach((r, index) => {
+      domainResultList.forEach((d, index) => {
+        const color = domainColors[d.domain] || "#4b7bec";
         html += `
           <div class="axis-row">
             <div class="axis-label">
-              ${index + 1}. ${elementDisplayNames[r.key]}
+              ${index + 1}. ${d.domain}
             </div>
             <div class="axis-bar-wrap">
-              <div class="axis-bar" style="width:${r.percent}%; background:#4b7bec;"></div>
+              <div class="axis-bar" style="width:${d.percent}%; background:${color};"></div>
             </div>
-            <div class="axis-percent">${r.percent}%</div>
+            <div class="axis-percent">${d.percent}%</div>
           </div>
         `;
       });
 
-      html += `<p class="small">👉 あなたの<strong>メインエレメント</strong>は「<strong>${elementDisplayNames[mainElement.key]}</strong>」です。</p>`;
-      html += `<p class="small"><strong>${elementDisplayNames[mainElement.key]}</strong>：${elementDescriptions[mainElement.key]}</p>`;
+      const mainElementLabel = mainDomain.domain;
+      html += `<p class="small">👉 あなたの<strong>メインエレメント</strong>は「<strong>${mainElementLabel}</strong>」です。</p>`;
 
-      talentResultDiv.innerHTML = html;
+      html += `<p class="small">${
+        domainResultList.map(d =>
+          `<strong>${d.domain}</strong>：${domainDescriptions[d.domain]}`
+        ).join("<br>")
+      }</p>`;
+
+      html += `<hr style="margin:14px 0;">`;
+      html += `<div class="result-title">8軸の結果（上位3つが今のメイン才能）</div>`;
+
+      axisResultList.forEach((a, index) => {
+        const color = domainColors[a.domain] || "#4b7bec";
+        html += `
+          <div class="axis-row">
+            <div class="axis-label">
+              ${index + 1}. ${a.label}
+              <span class="small">（${a.domain}）</span>
+              ${index < 3 ? `<span class="badge">メイン才能</span>` : ""}
+            </div>
+            <div class="axis-bar-wrap">
+              <div class="axis-bar" style="width:${a.percent}%; background:${color};"></div>
+            </div>
+            <div class="axis-percent">${a.percent}%</div>
+          </div>
+        `;
+      });
+
+      html += `<hr style="margin:14px 0;">`;
+      html += `<div class="result-title">上位3軸の解説</div>`;
+      top3.forEach(a => {
+        html += `
+          <p>
+            <strong>${a.label}</strong>（${a.domain}）<br>
+            <span class="small">${axisDescriptions[a.id] || ""}</span>
+          </p>
+        `;
+      });
+
+      html += `<p class="small">※この結果は、あくまで「今のあなたがよく使っている才能のパターン」です。<br>しっくりくるところ・意外だったところをメモしながら、自分の経験と照らし合わせてみてください。</p>`;
+
+      resultContent.innerHTML = html;
       resultCard.style.display = "block";
+
+      // シェア用テキスト
+      let shareText = "【才能8軸診断＋エレメント結果】\n\n";
+
+      shareText += "■ 4エレメントのバランス\n";
+      domainResultList.forEach(d => {
+        shareText += `・${d.domain}: ${d.percent}%\n`;
+      });
+
+      shareText += "\n■ 上位3軸\n";
+      top3.forEach(a => {
+        shareText += `・${a.label}（${a.domain}）: ${a.percent}%\n`;
+      });
+
+      shareText += "\n診断ツールはこちら：\n";
+      shareText += "https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/\n"; // ← ここはあとで書き換えてOK
+
+      latestShareText = shareText;
+      shareMsg.textContent = "";
+
+      // レーダーチャート描画
+      const ctx = document.getElementById("domainRadar").getContext("2d");
+      const labels = domainResultList.map(d => d.domain);
+      const data = domainResultList.map(d => d.percent);
+      const bgColors = domainResultList.map(d => (domainColors[d.domain] || "#4b7bec") + "33");
+      const borderColors = domainResultList.map(d => domainColors[d.domain] || "#4b7bec");
+
+      if (radarChart) {
+        radarChart.data.labels = labels;
+        radarChart.data.datasets[0].data = data;
+        radarChart.update();
+      } else {
+        radarChart = new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "エレメントバランス",
+              data: data,
+              fill: true,
+              backgroundColor: "rgba(75, 123, 236, 0.15)",
+              borderColor: "rgba(75, 123, 236, 1)",
+              pointBackgroundColor: "rgba(75, 123, 236, 1)"
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              r: {
+                suggestedMin: 0,
+                suggestedMax: 100,
+                ticks: { stepSize: 20 }
+              }
+            }
+          }
+        });
+      }
+
       resultCard.scrollIntoView({ behavior: "smooth" });
     });
 
-    // 星×才能タイプの表示
+    // シェアボタンの動き
+    copyBtn.onclick = async () => {
+      if (!latestShareText) {
+        shareMsg.textContent = "先に診断を完了してね。";
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(latestShareText);
+        shareMsg.textContent = "結果テキストをコピーしました。好きなアプリに貼りつけて使ってね。";
+      } catch (e) {
+        shareMsg.textContent = "コピーに失敗しました…ブラウザによって使えない場合があります。";
+      }
+    };
+
+    shareBtn.onclick = async () => {
+      if (!latestShareText) {
+        shareMsg.textContent = "先に診断を完了してね。";
+        return;
+      }
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "才能8軸診断 結果",
+            text: latestShareText
+          });
+          shareMsg.textContent = "共有メニューを開きました。";
+        } catch (e) {
+          shareMsg.textContent = "共有がキャンセルされました。";
+        }
+      } else {
+        shareMsg.textContent = "このブラウザは共有機能に対応していないので、コピー機能を使ってね。";
+      }
+    };
+
+    // 星×才能 16タイプ表示
     const starElementSelect = document.getElementById("starElementSelect");
     const astroResultBtn = document.getElementById("astroResultBtn");
     const astroResultBox = document.getElementById("astroResultBox");
@@ -424,12 +725,7 @@
       }
 
       const talentName = elementDisplayNames[latestTalentElementKey] || latestTalentElementKey;
-      const starLabel = {
-        FIRE: "FIRE（火）エレメント",
-        EARTH: "EARTH（土）エレメント",
-        AIR: "AIR（風）エレメント",
-        WATER: "WATER（水）エレメント"
-      }[starElement];
+      const starLabel = starElementLabels[starElement] || starElement;
 
       let html = "";
       html += `<p class="small">才能エレメント：<strong>${talentName}</strong><br>`;
