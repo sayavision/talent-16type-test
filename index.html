@@ -1,857 +1,335 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>才能×ホロスコープ診断（ベータ版）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>才能×ホロスコープ 16タイプ診断</title>
   <style>
-    :root {
-      --earth-color: #8f7cf3;   /* 紫寄り */
-      --fire-color:  #f9a26a;   /* オレンジ */
-      --air-color:   #6ec8a0;   /* グリーン */
-      --water-color: #7bbcf7;   /* 水色 */
-    }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 16px;
-      line-height: 1.7;
-      background: #f7f7fb;
-      color: #222;
-    }
-    h1 {
-      font-size: 1.4rem;
-      margin-bottom: 0.5rem;
-    }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin: 12px 0;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-    }
-    .small {
-      font-size: 0.85rem;
-      color: #666;
-    }
-    .field-row {
-      margin-bottom: 12px;
-    }
-    .field-row label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      display: block;
-      margin-bottom: 4px;
-    }
-    input[type="date"] {
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-    }
-    .question {
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #eee;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .question:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-    .question-title {
-      font-weight: 600;
-      margin-bottom: 6px;
-      font-size: 0.92rem;
-    }
-    .options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 0.9rem;
-    }
-    label.option {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid #ddd;
-      cursor: pointer;
-      background: #fafafa;
-    }
-    input[type="radio"] {
-      cursor: pointer;
-    }
-    .question.unanswered {
-      border-color: #fb7185;
-      background: #fff1f3;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 10px 18px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: #4b7bec;
-      color: white;
-      margin-top: 8px;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-
-    .result-title {
-      font-weight: 700;
-      margin-bottom: 4px;
-      margin-top: 12px;
-      font-size: 1rem;
-    }
-    .axis-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin: 6px 0;
-      font-size: 0.95rem;
-    }
-    .axis-label {
-      min-width: 200px;
-    }
-    .axis-bar-wrap {
-      flex: 1;
-      background: #f0f0f5;
-      border-radius: 999px;
-      overflow: hidden;
-      height: 10px;
-    }
-    .axis-bar {
-      height: 100%;
-      width: 0%;
-      transition: width 0.4s;
-    }
-    .axis-percent {
-      min-width: 40px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      font-size: 0.9rem;
-    }
-    .badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #3730a3;
-      margin-left: 4px;
-    }
-    .type-card {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 12px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      background: #f5f3ff;
-    }
-    .type-card img {
-      width: 76px;
-      height: 76px;
-      border-radius: 16px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: #fff;
-    }
-    .type-main-label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #555;
-    }
-    .type-main-name {
-      font-size: 1.02rem;
-      font-weight: 700;
-      margin-top: 2px;
-    }
-    .type-main-catch {
-      font-size: 0.85rem;
-      margin-top: 4px;
-      color: #555;
-    }
-    hr {
-      border: none;
-      border-top: 1px solid #eee;
-      margin: 14px 0;
-    }
+    :root { --bg:#0b1020; --card:#111a33; --txt:#e9ecf4; --muted:#a9b2cc; --accent:#7aa2ff; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif; background: linear-gradient(180deg,#0b1020,#070a12); color:var(--txt); }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 24px; }
+    .card { background: rgba(17,26,51,.92); border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 18px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+    h1 { font-size: 20px; margin: 0 0 10px; }
+    h2 { font-size: 18px; margin: 0 0 10px; }
+    p { color: var(--muted); line-height: 1.6; }
+    .row { display:flex; gap:14px; flex-wrap:wrap; }
+    .col { flex:1; min-width:260px; }
+    .btn { background: var(--accent); color:#07102a; border:0; padding: 10px 14px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+    .btn.sub { background: transparent; color: var(--txt); border: 1px solid rgba(255,255,255,.14); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .q { margin: 16px 0 10px; font-weight: 700; }
+    .opt { display:block; width:100%; text-align:left; padding: 12px 12px; margin: 10px 0; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color: var(--txt); cursor:pointer; }
+    .opt:hover { border-color: rgba(122,162,255,.6); }
+    .pill { display:inline-block; padding:6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); color: var(--muted); font-size: 12px; }
+    .resultTop { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+    .resultTop img { width: 180px; max-width: 40vw; height:auto; border-radius: 16px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
+    .kvs { margin-top: 10px; }
+    .kvs div { margin: 6px 0; color: var(--muted); }
+    .list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); }
+    .hr { height:1px; background: rgba(255,255,255,.10); margin: 14px 0; }
+    .small { font-size: 12px; color: var(--muted); }
+    input { width:100%; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); color: var(--txt); }
+    label { display:block; margin: 10px 0 6px; color: var(--muted); font-size: 12px; }
   </style>
 </head>
+
 <body>
+  <div class="wrap">
+    <div class="card" id="screenStart">
+      <h1>才能×ホロスコープ 16タイプ診断（テスト）</h1>
+      <p>まずは簡易診断（サンプル）で「メインエレメント」が出る状態にしています。質問文や配点はあとで差し替えできます。</p>
 
-  <div class="card">
-    <h1>才能×ホロスコープ診断（ベータ版）</h1>
-    <p class="small">
-      あなたの中にある<strong>4つのエレメント（EARTH／FIRE／AIR／WATER）</strong>をベースに、<br>
-      さらに8つの「動き方の軸」で才能のパターンを見ていきます。<br>
-      48個の質問に、直感で1〜5を選んでください。
-    </p>
-    <p class="small">
-      1：まったく当てはまらない／2：あまり当てはまらない／3：どちらともいえない／4：かなり当てはまる／5：とても当てはまる
-    </p>
-  </div>
-
-  <form id="quizForm" class="card">
-    <div class="field-row">
-      <label for="birthdate">生年月日（任意）</label>
-      <input type="date" id="birthdate">
-      <p class="small">
-        星座と才能を掛け合わせた結果も見たい場合だけ入力してください。未入力でも才能診断は使えます。
-      </p>
+      <div class="row">
+        <div class="col">
+          <h2>ホロスコープ（任意）</h2>
+          <label>生年月日（例：1990-06-04）</label>
+          <input id="birthDate" type="date" />
+          <label>出生時刻（任意）</label>
+          <input id="birthTime" type="time" />
+          <label>出生地（任意）</label>
+          <input id="birthPlace" type="text" placeholder="例：Tokyo" />
+          <p class="small">※ホロスコープの本計算は後で実装可能。今は入力を結果に表示するところまで。</p>
+        </div>
+        <div class="col">
+          <h2>スタート</h2>
+          <p>準備できたら開始を押してね。</p>
+          <button class="btn" id="btnStart">診断を開始</button>
+          <div class="hr"></div>
+          <span class="pill">画像ファイル名（同階層）</span>
+          <ul class="list">
+            <li>element_earth.png</li>
+            <li>element_fire.png</li>
+            <li>element_air.png</li>
+            <li>element_water.png</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
-    <div id="questionsContainer"></div>
-    <button type="submit">結果を見る</button>
-    <p class="small">※すべての質問に回答してからボタンを押してください。未回答の質問は赤く表示されます。</p>
-  </form>
+    <div class="card" id="screenQuiz" style="display:none;">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div class="pill" id="progress">Q1 / Q16</div>
+        <button class="btn sub" id="btnResetTop">最初から</button>
+      </div>
 
-  <div id="resultCard" class="card" style="display:none;">
-    <div id="resultContent"></div>
+      <div class="q" id="qText"></div>
+      <div id="options"></div>
 
-    <div id="resultShare" style="display:none; margin-top:14px;">
-      <button type="button" id="copyResultBtn">結果テキストをコピー</button>
-      <button type="button" id="shareResultBtn">結果をシェア</button>
-      <p id="shareMessage" class="small"></p>
+      <div class="hr"></div>
+      <div class="small">※ここはサンプル質問。さやちゃんの16才能ロジックに合わせて後で差し替えOK。</div>
+    </div>
+
+    <div class="card" id="screenResult" style="display:none;">
+      <h2>診断結果</h2>
+
+      <!-- ✅結果表示の先頭にエレメント画像 -->
+      <div class="resultTop">
+        <img id="elementImg" src="" alt="element character" />
+        <div>
+          <div class="pill" id="elementLabel">ELEMENT</div>
+          <h1 style="margin-top:10px;" id="elementTitle">あなたのメインエレメント：</h1>
+          <div class="kvs">
+            <div id="horoLine">ホロスコープ：-</div>
+            <div id="scoreLine">スコア：-</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>上位才能（サンプル）</h2>
+      <ol class="list" id="topTalents"></ol>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn" id="btnShare">結果をシェア（全文）</button>
+        <button class="btn sub" id="btnReset">もう一度診断</button>
+      </div>
+      <p class="small" id="shareHint" style="margin-top:10px;"></p>
     </div>
   </div>
 
-  <script>
-    // ---- 8軸定義（軸とエレメント紐づけ） ----
-    const axes = {
-      X1: { id: "X1", label: "大地のデザイン軸", element: "EARTH" },
-      X2: { id: "X2", label: "大地の実行軸", element: "EARTH" },
-      I1: { id: "I1", label: "火の発信軸",       element: "FIRE"  },
-      I2: { id: "I2", label: "火の推進軸",       element: "FIRE"  },
-      T1: { id: "T1", label: "風の分析軸",       element: "AIR"   },
-      T2: { id: "T2", label: "風の探究軸",       element: "AIR"   },
-      R1: { id: "R1", label: "水の共感軸",       element: "WATER" },
-      R2: { id: "R2", label: "水のチーム軸",     element: "WATER" }
+<script>
+  // =========================
+  // ✅ 画像マッピング（同階層）
+  // =========================
+  const ELEMENT_IMAGE = {
+    EARTH: "./element_earth.png",
+    FIRE:  "./element_fire.png",
+    AIR:   "./element_air.png",
+    WATER: "./element_water.png",
+  };
+
+  // =========================
+  // サンプル：16問（2択）
+  // ここを後で「本物の質問配点」に差し替えOK
+  // element: どのエレメントに加点するか
+  // talent: 16才能のキー（仮）に加点するか
+  // =========================
+  const QUESTIONS = Array.from({length:16}).map((_,i)=> {
+    const n = i+1;
+    // 仮でぐるぐる配分
+    const elements = ["EARTH","FIRE","AIR","WATER"];
+    const e1 = elements[i % 4];
+    const e2 = elements[(i+1) % 4];
+    const t1 = "T" + String((i % 16) + 1).padStart(2,"0");
+    const t2 = "T" + String(((i+7) % 16) + 1).padStart(2,"0");
+    return {
+      id: n,
+      text: `Q${n}. 直感で近い方を選んでください（サンプル）`,
+      options: [
+        { label: "A：コツコツ積み上げて形にするタイプ", element: e1, talent: t1 },
+        { label: "B：ひらめきや勢いで動きながら整えるタイプ", element: e2, talent: t2 },
+      ]
     };
+  });
 
-    // ---- 4エレメント定義 ----
-    const elements = {
-      EARTH: {
-        key: "EARTH",
-        fullLabel: "EARTH｜形にする領域",
-        color: "var(--earth-color)",
-        light: "#f3efff",
-        typeName: "畑を耕す実行タイプ",
-        typeCatch: "思いついた未来を、コツコツと現実の形にしていくタイプです。段取りや準備をしながら、一歩ずつ前に進んでいく力があります。",
-        description: "思いつきやアイデアを、現実世界の「かたち」にしていくフィールド。計画・段取り・実行を通して、未来を少しずつ具体化していく領域です。",
-        img: "img/element_earth.png"
-      },
-      FIRE: {
-        key: "FIRE",
-        fullLabel: "FIRE｜人と場を動かす領域",
-        color: "var(--fire-color)",
-        light: "#fff4eb",
-        typeName: "火を灯すムードメーカータイプ",
-        typeCatch: "自分のワクワクで、人や場の空気に火を灯していくタイプです。背中を押したり、流れを生み出したりする役割が得意です。",
-        description: "言葉や存在感、行動力で、人と場に火を灯していくフィールド。盛り上げたり、背中を押したり、流れを生み出す役割に向きます。",
-        img: "img/element_fire.png"
-      },
-      AIR: {
-        key: "AIR",
-        fullLabel: "AIR｜しくみを組む領域",
-        color: "var(--air-color)",
-        light: "#ecfbf4",
-        typeName: "しくみを組む思考家タイプ",
-        typeCatch: "情報を集めて整理し、しくみや戦略に落とし込んでいくタイプです。全体を俯瞰して、よりよい道筋を描くことが得意です。",
-        description: "情報を集めて整理し、意味やパターンを見出して「しくみ」にするフィールド。戦略を立てたり、全体像を描いたりすることで力を発揮します。",
-        img: "img/element_air.png"
-      },
-      WATER: {
-        key: "WATER",
-        fullLabel: "WATER｜絆を育てる領域",
-        color: "var(--water-color)",
-        light: "#edf6ff",
-        typeName: "安心をつくる共感タイプ",
-        typeCatch: "人の気持ちや関係性を大事にし、安心できる場を育てていくタイプです。そっと寄りそう力が、周りの人の支えになっています。",
-        description: "気持ちや関係性、場の安心感を大事にするフィールド。一人ひとりに寄りそい、チームやコミュニティを育てていきます。",
-        img: "img/element_water.png"
-      }
-    };
+  // 16才能の表示名（仮）
+  const TALENT_NAME = {
+    T01:"着想", T02:"達成", T03:"共感", T04:"分析",
+    T05:"社交", T06:"学習", T07:"戦略", T08:"調和",
+    T09:"未来", T10:"個別", T11:"責任", T12:"最上",
+    T13:"活発", T14:"適応", T15:"慎重", T16:"指令",
+  };
 
-    // ---- 各軸の詳しいフィードバック（1軸ごと） ----
-    const axisDescriptions = {
-      X1: "大地のデザイン軸は、全体の流れや手順を組み立てる力として表れます。やることを整理したり、タスクを並べ替えたり、「この順番で進めるとスムーズ」と直感的に組み立てたりする場面が多いはずです。頭の中で段取りを組みながら動くので、周りから見ると「準備が抜かりない人」「安心して任せられる人」と映りやすい才能です。プロジェクトの設計や、物事の進め方を整える役割で力を発揮しやすい軸と言えます。",
-      X2: "大地の実行軸は、「最後までやり切る力」として表れます。一度やると決めたことを途中で放り出さず、コツコツと積み上げていくことができます。約束や締め切りを守ろうとする意識が強く、「頼んだらちゃんとやってくれる人」として信頼されやすいタイプです。継続が必要なタスクや、地道な作業を着実に前に進める場面で、あなたの実行力が活きてきます。",
-      I1: "火の発信軸は、言葉や表情、存在感を通じて場を明るくする力として表れます。人前で話したり、SNSや日常の会話で自分の考えを伝えたりすることに、比較的抵抗が少ないタイプです。雑談やエピソードトークで空気を和ませたり、「この人がいると場が明るくなる」と感じてもらえることが多いでしょう。アイデアや想いを可視化して届ける役割で、あなたらしい魅力が発揮されます。",
-      I2: "火の推進軸は、人や物事を前に進める「背中押しの力」として働きます。人の意見を聞きつつ、「じゃあこうしよう」「まずここまで進めてみよう」と方向性を示すことが多いタイプです。企画や提案をわかりやすく説明し、相手に納得してもらうことも得意な領域です。停滞していたプロジェクトに再び勢いをつけたり、決まらない話をスッとまとめたりする場面で、あなたの推進力が活かされています。",
-      T1: "風の分析軸は、情報や出来事を整理して構造をつかむ力として表れます。ものごとの因果関係やパターンを見抜くのが得意で、「なぜそうなるのか？」を考える場面が多いはずです。複雑な話を分解して整理したり、リスクや抜け漏れにいち早く気づいたりできるため、慎重かつ賢い判断を支える存在です。データや事実をもとに考える必要がある場面で、その冷静な視点が強みになります。",
-      T2: "風の探究軸は、興味を持ったテーマをどこまでも深く追いかける力として働きます。「なぜ？」「どうしてそうなるの？」と考え始めると、自分でも止まらないと感じることがあるかもしれません。本や講座、実体験などを通してインプットしたものを、自分なりの言葉やノートで整理していくことが多く、その分野では自然と周りより詳しくなっていきます。知ること・理解が深まること自体を楽しめる軸です。",
-      R1: "水の共感軸は、人の気持ちに気づき寄りそう力として表れます。表情や声のトーンの変化に敏感で、「何となくいつもと違うな」と察することが多いタイプです。正しさを押しつけるよりも、まず相手の事情や感情を受けとめようとするので、本音を打ち明けてもらいやすい存在です。1対1の対話や、誰かの心のケアが必要な場面で、そのやわらかな感性が大きな支えになります。",
-      R2: "水のチーム軸は、人と人をつなげてチームとして機能させる力として表れます。一人ひとりの個性や状態を見ながら、「この組み合わせが良さそう」「この人にはこう声をかけよう」と自然に考えていることが多いタイプです。場の雰囲気がギスギスしているときは、さりげないフォローや調整で空気をやわらげることができます。チームやコミュニティの裏方・潤滑油のような役割で、あなたの強みが光ります。"
-    };
+  // =========================
+  // 状態
+  // =========================
+  let idx = 0;
+  let elementScore = { EARTH:0, FIRE:0, AIR:0, WATER:0 };
+  let talentScore = Object.fromEntries(Object.keys(TALENT_NAME).map(k => [k,0]));
 
-    const axisShortTags = {
-      X1: "全体の流れをデザインする",
-      X2: "物事をやり切る",
-      I1: "発信して場を明るくする",
-      I2: "人と物事を前に押し出す",
-      T1: "情報を整理して構造化する",
-      T2: "学び・探究を深める",
-      R1: "人の気持ちに寄りそう",
-      R2: "チームとして進める"
-    };
+  // =========================
+  // 画面切り替え
+  // =========================
+  const screenStart  = document.getElementById("screenStart");
+  const screenQuiz   = document.getElementById("screenQuiz");
+  const screenResult = document.getElementById("screenResult");
 
-    // ---- 質問定義（48問：X1, X2, I1, I2, T1, T2, R1, R2） ----
-    const questions = [
-      // X1 大地のデザイン軸
-      { id: 1, axis: "X1", text: "やることを紙やアプリにリスト化してから行動することが多い。" },
-      { id: 2, axis: "X1", text: "物事を進める前に、手順や流れを整理したくなる。" },
-      { id: 3, axis: "X1", text: "「この順番でやると効率がいい」と考えながら動いている。" },
-      { id: 4, axis: "X1", text: "仕事や家事のやり方を、もっと楽になるように工夫するのが好きだ。" },
-      { id: 5, axis: "X1", text: "みんなが迷わないように、ルールや仕組みを整えたくなる。" },
-      { id: 6, axis: "X1", text: "ゴールから逆算してスケジュールを組むのが得意だと感じる。" },
+  const progress = document.getElementById("progress");
+  const qText = document.getElementById("qText");
+  const optionsEl = document.getElementById("options");
 
-      // X2 大地の実行軸
-      { id: 7, axis: "X2", text: "途中で投げ出すのが嫌で、つい最後までやり切ってしまう。" },
-      { id: 8, axis: "X2", text: "締め切りが近づくと、むしろ集中力が高まるほうだ。" },
-      { id: 9, axis: "X2", text: "「途中までやって放置」が気持ち悪く感じる。" },
-      { id: 10, axis: "X2", text: "大変でも、一度引き受けたことはやり遂げたいと思う。" },
-      { id: 11, axis: "X2", text: "人から頼まれたことを忘れないよう、きちんと終わらせようとする。" },
-      { id: 12, axis: "X2", text: "長期的なプロジェクトでも、コツコツ続けることができる。" },
+  const elementImg = document.getElementById("elementImg");
+  const elementLabel = document.getElementById("elementLabel");
+  const elementTitle = document.getElementById("elementTitle");
+  const topTalents = document.getElementById("topTalents");
 
-      // I1 火の発信軸
-      { id: 13, axis: "I1", text: "人前で話すことに、そこまで強い抵抗はない。" },
-      { id: 14, axis: "I1", text: "自分の考えや経験を、SNSやブログなどで発信したくなる。" },
-      { id: 15, axis: "I1", text: "場が静かすぎると、つい話題を振ったり盛り上げたりしてしまう。" },
-      { id: 16, axis: "I1", text: "自分の意見をハッキリ言う方だと思う。" },
-      { id: 17, axis: "I1", text: "初対面の人とも、わりとすぐに会話を広げられる。" },
-      { id: 18, axis: "I1", text: "「あなたがいると場の雰囲気が明るくなる」と言われたことがある。" },
+  const horoLine = document.getElementById("horoLine");
+  const scoreLine = document.getElementById("scoreLine");
+  const shareHint = document.getElementById("shareHint");
 
-      // I2 火の推進軸
-      { id: 19, axis: "I2", text: "みんなの意見を聞いたうえで、「じゃあこうしよう」と方向性を示すことが多い。" },
-      { id: 20, axis: "I2", text: "企画やアイデアを、人に分かりやすくプレゼンするのが好きだ。" },
-      { id: 21, axis: "I2", text: "相手に納得してもらえる説明の仕方を考えるのが得意だ。" },
-      { id: 22, axis: "I2", text: "チームや周囲を巻き込みながら、物事を前に進めるのが好きだ。" },
-      { id: 23, axis: "I2", text: "自分がいいと思ったものは、人にも勧めたくなる。" },
-      { id: 24, axis: "I2", text: "会議や話し合いで、最終的に結論をまとめる役割になることが多い。" },
+  document.getElementById("btnStart").addEventListener("click", () => {
+    resetState();
+    screenStart.style.display = "none";
+    screenResult.style.display = "none";
+    screenQuiz.style.display = "block";
+    renderQuestion();
+  });
 
-      // T1 風の分析軸
-      { id: 25, axis: "T1", text: "情報を聞いたとき「なぜそうなるのか？」を考えたくなる。" },
-      { id: 26, axis: "T1", text: "問題が起きると、原因を分析して再発防止策を考える。" },
-      { id: 27, axis: "T1", text: "データや数字を見て判断するのが好きだ。" },
-      { id: 28, axis: "T1", text: "物事のメリット・デメリットを整理してから決めたいタイプだ。" },
-      { id: 29, axis: "T1", text: "複雑な話を構造化して、図や箇条書きでまとめるのが得意だ。" },
-      { id: 30, axis: "T1", text: "先のリスクや抜け漏れに、比較的早く気づく方だ。" },
+  document.getElementById("btnReset").addEventListener("click", () => location.reload());
+  document.getElementById("btnResetTop").addEventListener("click", () => location.reload());
 
-      // T2 風の探究軸
-      { id: 31, axis: "T2", text: "興味を持ったテーマは、ネットや本で徹底的に調べたくなる。" },
-      { id: 32, axis: "T2", text: "学びのための講座や本に、お金や時間を使うことに抵抗が少ない。" },
-      { id: 33, axis: "T2", text: "「なぜ？」「どういう仕組み？」と深く掘り下げて考えるのが好きだ。" },
-      { id: 34, axis: "T2", text: "一度ハマった分野については、人より詳しくなりがちだ。" },
-      { id: 35, axis: "T2", text: "新しい知識や考え方に触れるとワクワクする。" },
-      { id: 36, axis: "T2", text: "学んだことを自分なりに整理して、メモやノートにまとめることが多い。" },
+  // =========================
+  // 質問表示
+  // =========================
+  function renderQuestion() {
+    const q = QUESTIONS[idx];
+    progress.textContent = `Q${idx+1} / ${QUESTIONS.length}`;
+    qText.textContent = q.text;
+    optionsEl.innerHTML = "";
 
-      // R1 水の共感軸
-      { id: 37, axis: "R1", text: "人の表情や声のトーンから、気持ちの変化に敏感だと思う。" },
-      { id: 38, axis: "R1", text: "悩んでいる人の話を聞くと、つい親身になってしまう。" },
-      { id: 39, axis: "R1", text: "相手が傷つかないような言い方を選びがちだ。" },
-      { id: 40, axis: "R1", text: "相談されることが多い方だ。" },
-      { id: 41, axis: "R1", text: "相手の立場に立って考える癖がある。" },
-      { id: 42, axis: "R1", text: "誰かが疎外されている雰囲気に気づくと、放っておけない。" },
+    q.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "opt";
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => {
+        // 加点
+        elementScore[opt.element] = (elementScore[opt.element] || 0) + 1;
+        talentScore[opt.talent] = (talentScore[opt.talent] || 0) + 1;
 
-      // R2 水のチーム軸
-      { id: 43, axis: "R2", text: "一人でやるより、誰かと一緒に進める方がやる気が出る。" },
-      { id: 44, axis: "R2", text: "チームのメンバーそれぞれの強みや個性を意識して見ている。" },
-      { id: 45, axis: "R2", text: "役割分担やスケジュールを調整することが多い。" },
-      { id: 46, axis: "R2", text: "場の空気がギスギスしていると、なんとか和らげたくなる。" },
-      { id: 47, axis: "R2", text: "みんなが気持ちよく働けるように、裏でサポートするのが得意だ。" },
-      { id: 48, axis: "R2", text: "会議や作業の前後に、メンバーに声をかけてフォローすることが多い。" }
-    ];
-
-    const container = document.getElementById("questionsContainer");
-
-    // ---- 質問描画 ----
-    questions.forEach((q, index) => {
-      const wrap = document.createElement("div");
-      wrap.className = "question";
-
-      const title = document.createElement("div");
-      title.className = "question-title";
-      title.textContent = `${index + 1}. ${q.text}`;
-      wrap.appendChild(title);
-
-      const options = document.createElement("div");
-      options.className = "options";
-
-      const labels = [
-        "1：まったく当てはまらない",
-        "2：あまり当てはまらない",
-        "3：どちらともいえない",
-        "4：かなり当てはまる",
-        "5：とても当てはまる"
-      ];
-
-      for (let value = 1; value <= 5; value++) {
-        const label = document.createElement("label");
-        label.className = "option";
-        const input = document.createElement("input");
-        input.type = "radio";
-        input.name = `q${q.id}`;
-        input.value = value;
-        label.appendChild(input);
-        label.appendChild(document.createTextNode(labels[value - 1]));
-        options.appendChild(label);
-      }
-
-      wrap.appendChild(options);
-      container.appendChild(wrap);
-    });
-
-    const form = document.getElementById("quizForm");
-    const resultCard = document.getElementById("resultCard");
-    const resultContent = document.getElementById("resultContent");
-    const shareDiv = document.getElementById("resultShare");
-    const copyBtn = document.getElementById("copyResultBtn");
-    const shareBtn = document.getElementById("shareResultBtn");
-    const shareMsg = document.getElementById("shareMessage");
-    let latestShareText = "";
-
-    // ---- 3軸掛け合わせフィードバック自動生成 ----
-    function buildTripleFeedback(top3) {
-      if (!top3 || top3.length < 3) return "";
-      const axisNames = top3.map(a => a.label);
-      const axisIds = top3.map(a => a.id);
-
-      let text = "";
-      text += `あなたの今のメインの才能は「${axisNames.join("」「")}」の3つです。これは、あなたが無意識に使っている才能であり、「頑張らなくても自然と活用できる」領域でもあります。\n\n`;
-
-      top3.forEach(a => {
-        const desc = axisDescriptions[a.id] || "";
-        text += desc + "\n\n";
-      });
-
-      const tagText = axisIds.map(id => axisShortTags[id]).join("・");
-      text += `この3つが掛け合わさると、「${tagText}」ことが自然と同時に起きるスタイルになります。思いつきだけで動くのではなく、自分なりのパターンで動けているときほど、あなたの才能は一番心地よく発揮されていきます。企画づくり・仕事の進行・人との関わりなど、日常のさまざまな場面で、この組み合わせならではの動き方を意識してみてください。`;
-
-      return text;
-    }
-
-    // ---- 星座判定 ----
-    function getZodiacFromDateStr(dateStr) {
-      if (!dateStr) return null;
-      const [y, m, d] = dateStr.split("-").map(Number);
-      if (!m || !d) return null;
-      const month = m;
-      const day = d;
-
-      // ざっくり西洋占星術の日付
-      // 戻り値: { name: "双子座", element: "AIR" }
-      if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) {
-        return { name: "牡羊座", element: "FIRE" };
-      } else if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) {
-        return { name: "牡牛座", element: "EARTH" };
-      } else if ((month === 5 && day >= 21) || (month === 6 && day <= 21)) {
-        return { name: "双子座", element: "AIR" };
-      } else if ((month === 6 && day >= 22) || (month === 7 && day <= 22)) {
-        return { name: "蟹座", element: "WATER" };
-      } else if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) {
-        return { name: "獅子座", element: "FIRE" };
-      } else if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) {
-        return { name: "乙女座", element: "EARTH" };
-      } else if ((month === 9 && day >= 23) || (month === 10 && day <= 23)) {
-        return { name: "天秤座", element: "AIR" };
-      } else if ((month === 10 && day >= 24) || (month === 11 && day <= 22)) {
-        return { name: "蠍座", element: "WATER" };
-      } else if ((month === 11 && day >= 23) || (month === 12 && day <= 21)) {
-        return { name: "射手座", element: "FIRE" };
-      } else if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) {
-        return { name: "山羊座", element: "EARTH" };
-      } else if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) {
-        return { name: "水瓶座", element: "AIR" };
-      } else if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) {
-        return { name: "魚座", element: "WATER" };
-      }
-      return null;
-    }
-
-    // ---- 星×才能タイプ名 & メッセージ ----
-    const starTalentTypeNames = {
-      "FIRE_EARTH": "情熱を現実に落とすプロデューサー",
-      "FIRE_FIRE":  "場を燃やすフロントランナー",
-      "FIRE_AIR":   "ひらめき戦略クリエイター",
-      "FIRE_WATER": "情熱でつなぐコミュニティメーカー",
-
-      "EARTH_EARTH": "堅実に積み上げるグランドビルダー",
-      "EARTH_FIRE":  "現実感覚を持ったリーダータイプ",
-      "EARTH_AIR":   "ロジカルに道を敷くプランナー",
-      "EARTH_WATER": "安心土台のサポートリーダー",
-
-      "AIR_EARTH":   "学びを形にするナビゲーター",
-      "AIR_FIRE":    "伝える力で動かすコミュニケーター",
-      "AIR_AIR":     "コンセプトを編むアイデア設計士",
-      "AIR_WATER":   "言葉で心をつなぐストーリーテラー",
-
-      "WATER_EARTH": "思いやりを形にするケアプロデューサー",
-      "WATER_FIRE":  "感情に火を灯すエンカレッジャー",
-      "WATER_AIR":   "感性で読み解くインサイトリーダー",
-      "WATER_WATER": "深い絆を育てるスペースホルダー"
-    };
-
-    const starTalentMessages = {
-      // FIRE星座 × EARTH才能
-      "FIRE_EARTH": `
-火の星座である{{SIGN}}は、もともとストレートでエネルギッシュな「動き出す力」を持っています。そこに EARTH｜形にする領域の実行力が重なることで、「やると言ったことを、ちゃんと現実の結果にする人」というカラーが強くなります。ひらめきや情熱だけで終わらせず、具体的なタスクに落とし込み、コツコツと前に進めていくことができます。勢いでスタートしつつも、途中で失速せずにゴールまで走り切れるのがあなたの強みです。新しい企画やチャレンジを思いついたとき、実際のスケジュールや段取りまで描いて動き出せるので、周りからは「頼れる推進役」「現場感覚のあるリーダー」として見られやすいタイプです。
-`.trim(),
-
-      // FIRE星座 × FIRE才能
-      "FIRE_FIRE": `
-火の星座である{{SIGN}}は、「やってみたい」「面白そう」と感じた方向へ、一気に飛び込んでいく情熱を持っています。そこに FIRE｜人と場を動かす領域の才能が重なることで、自分だけでなく周りの人の心にも火を灯していく存在になります。あなたがワクワクを言葉にしたり行動で示したりすると、自然と人が集まり、場の空気が変わっていきます。怖さよりも好奇心が勝ったとき、あなたは誰よりも早く一歩目を踏み出せる人です。その姿勢が「一緒にやってみよう」「この人についていきたい」と感じてもらえる理由になっています。
-`.trim(),
-
-      // FIRE星座 × AIR才能
-      "FIRE_AIR": `
-火の星座である{{SIGN}}は、行動力と直感的なひらめきを持つタイプです。そこに AIR｜しくみを組む領域の才能が重なることで、「ひらめきを戦略に変える人」というカラーが生まれます。思いつきをその場のノリで終わらせず、「どうすれば一番面白くなるか」「どんな形なら届けやすいか」と考え、構成や仕組みを組み立てていくことができます。情熱とロジックのバランスが取れているので、勢いだけでも、頭でっかちでもないスタイルで動けるのが特徴です。企画づくりやサービス設計、発信戦略など、「おもしろいことをカタチにする」場面で強みが発揮されます。
-`.trim(),
-
-      // FIRE星座 × WATER才能
-      "FIRE_WATER": `
-火の星座である{{SIGN}}は、気持ちが動いた方向へ素直に進んでいく力を持っています。そこに WATER｜絆を育てる領域の才能が重なることで、「感情に火を灯して、人と人をつなぐ人」というカラーが強まります。あなたが本気で「いい」と思ったものを語るとき、その熱量は周りの人の心を温め、安心して一歩踏み出せる雰囲気をつくります。誰かの不安や迷いに寄りそいながら、「大丈夫、一緒にやってみよう」と火を灯せる存在です。コミュニティづくりや場の運営、1対1のセッションなど、人の心と変化に寄り添うシーンで、その優しい情熱が力になります。
-`.trim(),
-
-      // EARTH星座 × EARTH才能
-      "EARTH_EARTH": `
-地の星座である{{SIGN}}は、現実感覚と安定志向を持ち、「ちゃんとした土台」を大切にします。そこに EARTH｜形にする領域の才能が重なることで、「堅実に積み上げていくグランドビルダー」というカラーが際立ちます。一気に派手な変化を起こすよりも、確実な一歩を積み重ねていくことに安心感を覚えるタイプです。計画を立て、ルールや仕組みを整え、約束を守りながら進めていく姿は、周りにとって大きな信頼の源になります。長期プロジェクトの運営や、基盤づくり、継続的なサービス提供など、「続けるほど良さが出る領域」で、本来の力が発揮されていきます。
-`.trim(),
-
-      // EARTH星座 × FIRE才能
-      "EARTH_FIRE": `
-地の星座である{{SIGN}}は、慎重さと現実的な視点を持ち、「ちゃんと役に立つかどうか」を大切にします。そこに FIRE｜人と場を動かす領域の才能が重なることで、「地に足のついたリーダータイプ」というカラーが生まれます。勢いだけで煽るのではなく、現実的な見通しを持ったうえで人を巻き込めるので、「この人についていけば大丈夫そう」と感じてもらいやすい存在です。自分が本気で価値を感じたものだけを勧める誠実さもあり、信頼ベースの発信や営業に向いています。チームやクライアントと一緒に、着実に成果を出していく場面でその力が活きます。
-`.trim(),
-
-      // EARTH星座 × AIR才能
-      "EARTH_AIR": `
-地の星座である{{SIGN}}は、具体性や実用性を大事にし、「現場で使えるかどうか」という視点を持っています。そこに AIR｜しくみを組む領域の才能が重なることで、「ロジカルに道を敷くプランナー」というカラーが強まります。机上の空論ではなく、現実に回る形で計画や仕組みを設計できる人です。条件や制約も踏まえたうえで最適解を考えられるので、プロジェクトの工程設計や、業務フローの改善、ビジネスモデルの組み立てなどに向いています。「ちゃんと動くシステム」をつくることに喜びを感じるタイプと言えるでしょう。
-`.trim(),
-
-      // EARTH星座 × WATER才能
-      "EARTH_WATER": `
-地の星座である{{SIGN}}は、安心感や堅実さを大事にし、無理のないペースで進めていくことを好みます。そこに WATER｜絆を育てる領域の才能が重なることで、「安心土台のサポートリーダー」というカラーが生まれます。感情に振り回されるのではなく、落ち着いた視点から人の気持ちや状況を見守ることができるタイプです。派手ではなくても、必要なときに必要なケアを差し出せるため、「気づいたらいつも支えられている」と感じてもらいやすい存在です。チームのマネジメントや、クライアントとの長期的な関係づくりなど、じっくり信頼を育てる場面で力が発揮されます。
-`.trim(),
-
-      // AIR星座 × EARTH才能
-      "AIR_EARTH": `
-風の星座である{{SIGN}}は、軽やかな好奇心とコミュニケーション力を持ち、「知る・話す・つなぐ」ことを自然に楽しめるタイプです。そこに EARTH｜形にする領域の才能が重なることで、「学びを形にするナビゲーター」というカラーが強まります。インプットした情報やアイデアを、自分の中だけに溜めておくのではなく、ノートや図解、コンテンツ、サービスなどのかたちに落とし込んでいくことができます。「これ面白いよ」と伝えるだけでなく、「だからこうしてみよう」と具体的な提案までつなげられる人です。講座づくりやプログラム設計、情報発信と実行支援をセットで行うような仕事に、あなたの才能がよくフィットしていきます。
-`.trim(),
-
-      // AIR星座 × FIRE才能
-      "AIR_FIRE": `
-風の星座である{{SIGN}}は、アイデアや言葉を扱うことが得意で、人との会話や情報交換の中で力を発揮します。そこに FIRE｜人と場を動かす領域の才能が重なることで、「伝える力で動かすコミュニケーター」というカラーになります。考えを分かりやすく言語化し、それを熱量を持って届けられるので、プレゼンテーションや発信、ファシリテーションなどに向いています。知識をただ披露するのではなく、「聞いた人が一歩動きたくなるメッセージ」に変換できるのがあなたの強みです。オンライン・オフラインを問わず、言葉で場を動かす役割を担いやすいタイプと言えるでしょう。
-`.trim(),
-
-      // AIR星座 × AIR才能
-      "AIR_AIR": `
-風の星座である{{SIGN}}は、もともと「考える・話す・つなぐ」ことが得意な気質を持っています。そこに AIR｜しくみを組む領域の才能が重なることで、「コンセプトを編むアイデア設計士」というカラーが際立ちます。さまざまな情報や経験を横断的につなぎ合わせて、新しい切り口や枠組みを生み出すことができます。答えがひとつに決まらないテーマほど、あなたの好奇心と思考力が刺激されるでしょう。抽象度の高い概念をわかりやすく言い換えたり、複雑な仕組みを図解したりすることで、多くの人に「なるほど」を届けられるタイプです。
-`.trim(),
-
-      // AIR星座 × WATER才能
-      "AIR_WATER": `
-風の星座である{{SIGN}}は、言葉や会話を通じて人と関わることを楽しめる気質を持っています。そこに WATER｜絆を育てる領域の才能が重なることで、「言葉で心をつなぐストーリーテラー」というカラーが生まれます。相手の気持ちに寄りそいながら、その人の物語を一緒に言語化していくことができる人です。カウンセリング的な対話や、インタビュー、ストーリー発信など、「言葉を介して感情を扱う」シーンで力を発揮します。優しくリアルな表現を通して、「自分の気持ちをわかってもらえた」と感じてもらえる存在です。
-`.trim(),
-
-      // WATER星座 × EARTH才能
-      "WATER_EARTH": `
-水の星座である{{SIGN}}は、感情や空気感に敏感で、人の心の動きに自然と目が向くタイプです。そこに EARTH｜形にする領域の才能が重なることで、「思いやりを形にするケアプロデューサー」というカラーが強まります。相手の困りごとや不安を察知し、「何かしてあげたい」という気持ちを、具体的なサポートや仕組みとして形にしていくことができます。優しさを優しさのままで終わらせず、現実的な手当として届けられる人です。ケアに関するサービスづくりや、サポートプログラムの設計、裏方としての段取りなどで才能を発揮しやすいタイプと言えるでしょう。
-`.trim(),
-
-      // WATER星座 × FIRE才能
-      "WATER_FIRE": `
-水の星座である{{SIGN}}は、感情の動きや目に見えない雰囲気をよく感じ取るタイプです。そこに FIRE｜人と場を動かす領域の才能が重なることで、「感情に火を灯すエンカレッジャー」というカラーが際立ちます。落ち込んでいる人の気持ちを丁寧に受けとめつつ、「大丈夫、こうしてみよう」と前向きな火を分け与えることができます。強く押しつけるのではなく、相手のペースを尊重しながら背中を押せるのがあなたの良さです。コーチングや伴走支援、コミュニティの運営など、人の変化を応援する場面でその力が光ります。
-`.trim(),
-
-      // WATER星座 × AIR才能
-      "WATER_AIR": `
-水の星座である{{SIGN}}は、感性豊かで、目に見えないニュアンスを大切にするタイプです。そこに AIR｜しくみを組む領域の才能が重なることで、「感性で読み解くインサイトリーダー」というカラーが生まれます。人の言葉にならないモヤモヤや、本当の本音を感じ取り、それを丁寧な言葉や概念として整理していくことができます。直感だけでなく、論理や構造も扱えるため、感覚的なテーマをわかりやすいフレームワークに落とし込むことも可能です。心理・自己理解・組織の空気など、見えにくい領域の「言語化と整理」をする役割に向いています。
-`.trim(),
-
-      // WATER星座 × WATER才能
-      "WATER_WATER": `
-水の星座である{{SIGN}}は、もともと感情やつながりに深くチューニングされた気質を持っています。そこに WATER｜絆を育てる領域の才能が重なることで、「深い絆を育てるスペースホルダー」というカラーが際立ちます。安心して本音を話せる場をつくったり、時間をかけて関係性を育てたりすることに、大きな喜びを感じるタイプです。派手なアクションよりも、「ここにいていいんだ」と感じてもらえる空間づくりこそが、あなたのギフトです。少人数のコミュニティ運営や継続セッション、長期的な伴走など、時間をかけて信頼を耕す場面で才能が花開いていきます。
-`.trim()
-    };
-
-    function buildStarTalentFeedback(signInfo, mainElementKey) {
-      if (!signInfo || !mainElementKey) return null;
-      const key = `${signInfo.element}_${mainElementKey}`;
-      const title = starTalentTypeNames[key];
-      const tpl = starTalentMessages[key];
-      if (!title || !tpl) return null;
-      const body = tpl.replace(/{{SIGN}}/g, signInfo.name);
-      return { title, body };
-    }
-
-    // ---- 採点処理 ----
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      const birthdateStr = document.getElementById("birthdate").value || "";
-      const sunSign = getZodiacFromDateStr(birthdateStr);
-
-      const answers = {};
-      let allAnswered = true;
-      const questionElems = container.querySelectorAll(".question");
-      questionElems.forEach(qEl => qEl.classList.remove("unanswered"));
-
-      questions.forEach((q, index) => {
-        const selected = form.querySelector(`input[name="q${q.id}"]:checked`);
-        if (!selected) {
-          allAnswered = false;
-          if (questionElems[index]) {
-            questionElems[index].classList.add("unanswered");
-          }
+        // 次へ
+        idx++;
+        if (idx >= QUESTIONS.length) {
+          showResult();
         } else {
-          answers[q.id] = Number(selected.value);
+          renderQuestion();
         }
       });
+      optionsEl.appendChild(btn);
+    });
+  }
 
-      if (!allAnswered) {
-        alert("まだ答えていない質問があります。赤くなっているところを確認してください。");
-        const first = container.querySelector(".question.unanswered");
-        if (first) {
-          first.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-        return;
-      }
+  // =========================
+  // 結果表示（✅ここで画像を出す）
+  // =========================
+  function showResult() {
+    screenQuiz.style.display = "none";
+    screenResult.style.display = "block";
 
-      // 軸ごとのスコア
-      const axisScores = {};
-      const axisMax = {};
-      Object.keys(axes).forEach(axisId => {
-        axisScores[axisId] = 0;
-        axisMax[axisId] = 0;
-      });
+    const mainElement = pickMaxKey(elementScore);
+    const elementJp = {
+      EARTH:"EARTH（地）", FIRE:"FIRE（火）", AIR:"AIR（風）", WATER:"WATER（水）"
+    }[mainElement] || mainElement;
 
-      questions.forEach(q => {
-        const axisId = q.axis;
-        axisScores[axisId] += answers[q.id];
-        axisMax[axisId] += 5; // 各質問の最大値は5
-      });
+    // ✅ 画像表示
+    elementImg.src = ELEMENT_IMAGE[mainElement] || "";
+    elementImg.alt = `${mainElement} character`;
 
-      // エレメントごとの集計
-      const elementScores = {};
-      const elementMax = {};
-      Object.keys(axes).forEach(axisId => {
-        const axis = axes[axisId];
-        const elKey = axis.element;
-        if (!elementScores[elKey]) {
-          elementScores[elKey] = 0;
-          elementMax[elKey] = 0;
-        }
-        elementScores[elKey] += axisScores[axisId];
-        elementMax[elKey] += axisMax[axisId];
-      });
+    elementLabel.textContent = `MAIN ELEMENT：${mainElement}`;
+    elementTitle.textContent = `あなたのメインエレメント：${elementJp}`;
 
-      const elementResultList = Object.keys(elementScores).map(elKey => {
-        const raw = elementScores[elKey];
-        const max = elementMax[elKey] || 1;
-        const percent = Math.round(raw / max * 100);
-        return {
-          key: elKey,
-          raw,
-          max,
-          percent,
-          meta: elements[elKey]
-        };
-      }).sort((a, b) => b.percent - a.percent);
+    // スコア表示
+    scoreLine.textContent = `スコア：EARTH ${elementScore.EARTH} / FIRE ${elementScore.FIRE} / AIR ${elementScore.AIR} / WATER ${elementScore.WATER}`;
 
-      // 軸スコア
-      const axisResultList = Object.keys(axes).map(axisId => {
-        const meta = axes[axisId];
-        const raw = axisScores[axisId];
-        const max = axisMax[axisId] || 1;
-        const percent = Math.round(raw / max * 100);
-        return {
-          id: axisId,
-          label: meta.label,
-          element: meta.element,
-          rawScore: raw,
-          max,
-          percent
-        };
-      }).sort((a, b) => b.percent - a.percent);
+    // ホロス入力を結果に反映（まずは表示だけ）
+    const bd = document.getElementById("birthDate").value || "-";
+    const bt = document.getElementById("birthTime").value || "-";
+    const bp = document.getElementById("birthPlace").value || "-";
+    horoLine.textContent = `ホロスコープ入力：生年月日=${bd} / 時刻=${bt} / 場所=${bp}`;
 
-      const top3 = axisResultList.slice(0, 3);
+    // 上位才能TOP5（仮）
+    const top5 = Object.entries(talentScore)
+      .sort((a,b)=> b[1]-a[1])
+      .slice(0,5);
 
-      // 結果HTML生成
-      let html = "";
-
-      // タイプカード（メインエレメント）
-      if (elementResultList.length > 0) {
-        const mainEl = elementResultList[0];
-        const meta = mainEl.meta;
-        html += `
-          <div class="type-card" style="background:${meta.light};">
-            <img src="${meta.img}" alt="${meta.fullLabel}">
-            <div>
-              <div class="type-main-label">メインエレメント：${meta.fullLabel}</div>
-              <div class="type-main-name">${meta.typeName}</div>
-              <div class="type-main-catch">${meta.typeCatch}</div>
-            </div>
-          </div>
-        `;
-      }
-
-      // 4エレメント（才能のフィールド）
-      html += `<div class="result-title">メインエレメント（才能のフィールド）</div>`;
-      html += `<p class="small">数字が高いほど、そのエレメントの才能を今よく使っている可能性が高いです。</p>`;
-
-      elementResultList.forEach((d, index) => {
-        html += `
-          <div class="axis-row">
-            <div class="axis-label">
-              ${index + 1}. ${d.meta.fullLabel}
-            </div>
-            <div class="axis-bar-wrap">
-              <div class="axis-bar" style="width:${d.percent}%; background:${d.meta.color};"></div>
-            </div>
-            <div class="axis-percent">${d.percent}%</div>
-          </div>
-        `;
-      });
-
-      // 各エレメントの説明
-      html += `<p class="small">`;
-      Object.keys(elements).forEach(elKey => {
-        const el = elements[elKey];
-        html += `<strong>${el.fullLabel}</strong>：${el.description}<br>`;
-      });
-      html += `</p>`;
-
-      html += `<hr>`;
-
-      // 8軸の結果
-      html += `<div class="result-title">エレメントの詳しい内訳（8つの才能軸）</div>`;
-      html += `<p class="small">4つのエレメントを、さらに8つの「動き方の軸」に分けて見ています。上位3つが、今のあなたのメイン才能です。</p>`;
-
-      axisResultList.forEach((a, index) => {
-        const elMeta = elements[a.element];
-        html += `
-          <div class="axis-row">
-            <div class="axis-label">
-              ${index + 1}. ${a.label}
-              <span class="small">（${elMeta.fullLabel}）</span>
-              ${index < 3 ? `<span class="badge">メイン才能</span>` : ""}
-            </div>
-            <div class="axis-bar-wrap">
-              <div class="axis-bar" style="width:${a.percent}%; background:${elMeta.color};"></div>
-            </div>
-            <div class="axis-percent">${a.percent}%</div>
-          </div>
-        `;
-      });
-
-      // 上位3軸の詳しい説明
-      html += `<hr>`;
-      html += `<div class="result-title">上位3軸の詳しいフィードバック</div>`;
-
-      top3.forEach(a => {
-        const elMeta = elements[a.element];
-        html += `
-          <p>
-            <strong>${a.label}</strong>（${elMeta.fullLabel}）<br>
-            <span class="small">${axisDescriptions[a.id] || ""}</span>
-          </p>
-        `;
-      });
-
-      // 3軸掛け合わせフィードバック
-      html += `<hr>`;
-      html += `<div class="result-title">3つの掛け合わせによる才能のフィードバック</div>`;
-      const tripleText = buildTripleFeedback(top3);
-      html += `<p class="small" style="white-space:pre-wrap;">${tripleText}</p>`;
-
-      // 星×才能 16タイプ
-      const mainElementKey = elementResultList[0] ? elementResultList[0].key : null;
-      const starTalent = buildStarTalentFeedback(sunSign, mainElementKey);
-
-      if (starTalent && sunSign && mainElementKey && elements[mainElementKey]) {
-        const elMeta = elements[mainElementKey];
-        html += `<hr>`;
-        html += `<div class="result-title">星と才能を合わせたタイプ</div>`;
-        html += `<p><strong>${sunSign.name} × ${elMeta.fullLabel}</strong><br>`;
-        html += `<span class="small">タイプ名：${starTalent.title}</span></p>`;
-        html += `<p class="small" style="white-space:pre-wrap;">${starTalent.body}</p>`;
-      }
-
-      html += `<p class="small">※この診断は「今のあなたがよく使っているパターン」をざっくり言語化したものです。しっくりくる部分・意外な部分をメモしながら、自分の経験と照らし合わせてみてください。</p>`;
-
-      resultContent.innerHTML = html;
-      resultCard.style.display = "block";
-
-      // シェア用テキスト
-      let shareText = "【才能×ホロスコープ診断 結果】\n\n";
-      if (elementResultList[0]) {
-        shareText += `■ メインエレメント\n`;
-        shareText += `・${elementResultList[0].meta.fullLabel}: ${elementResultList[0].percent}%\n\n`;
-      }
-      shareText += "■ 上位3軸\n";
-      top3.forEach(a => {
-        const elMeta = elements[a.element];
-        shareText += `・${a.label}（${elMeta.fullLabel}）: ${a.percent}%\n`;
-      });
-      if (sunSign && starTalent) {
-        shareText += `\n■ 星×才能タイプ\n`;
-        shareText += `${sunSign.name} × ${elements[mainElementKey].fullLabel}「${starTalent.title}」\n`;
-      }
-      shareText += "\n診断ツールはこちら：\n";
-      shareText += "https://sayavision.github.io/talent-16type-test/\n";
-
-      latestShareText = shareText;
-      shareDiv.style.display = "block";
-      shareMsg.textContent = "";
-
-      resultCard.scrollIntoView({ behavior: "smooth" });
+    topTalents.innerHTML = "";
+    top5.forEach(([k,v]) => {
+      const li = document.createElement("li");
+      li.textContent = `${TALENT_NAME[k] || k}（${v}）`;
+      topTalents.appendChild(li);
     });
 
-    // ---- シェアボタンの動き ----
-    copyBtn.onclick = async () => {
-      if (!latestShareText) {
-        shareMsg.textContent = "先に診断を完了してね。";
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(latestShareText);
-        shareMsg.textContent = "結果テキストをコピーしました。好きなアプリに貼りつけて使ってね。";
-      } catch (e) {
-        shareMsg.textContent = "コピーに失敗しました…ブラウザによって使えない場合があります。";
-      }
-    };
+    // シェア
+    document.getElementById("btnShare").onclick = () => shareResult({
+      element: mainElement,
+      elementScore,
+      talentTop5: top5.map(([k,v]) => ({ key:k, name:(TALENT_NAME[k]||k), score:v })),
+      horoscope: { birthDate: bd, birthTime: bt, birthPlace: bp },
+      url: location.href
+    });
+  }
 
-    shareBtn.onclick = async () => {
-      if (!latestShareText) {
-        shareMsg.textContent = "先に診断を完了してね。";
+  function pickMaxKey(obj) {
+    return Object.entries(obj).sort((a,b)=> b[1]-a[1])[0][0];
+  }
+
+  function resetState() {
+    idx = 0;
+    elementScore = { EARTH:0, FIRE:0, AIR:0, WATER:0 };
+    talentScore = Object.fromEntries(Object.keys(TALENT_NAME).map(k => [k,0]));
+  }
+
+  // =========================
+  // ✅ 結果を「全文」で共有する
+  // =========================
+  function buildShareText(result) {
+    const lines = [];
+    lines.push("【才能×ホロスコープ 16タイプ診断｜結果】");
+    lines.push(`メインエレメント：${result.element}`);
+    lines.push("");
+    lines.push("▼上位才能TOP5");
+    result.talentTop5.forEach((t,i)=>{
+      lines.push(`${i+1}. ${t.name}（${t.score}）`);
+    });
+    lines.push("");
+    lines.push(`▼ホロスコープ入力`);
+    lines.push(`生年月日：${result.horoscope.birthDate}`);
+    lines.push(`出生時刻：${result.horoscope.birthTime}`);
+    lines.push(`出生地：${result.horoscope.birthPlace}`);
+    lines.push("");
+    lines.push(`診断URL：${result.url}`);
+    lines.push("#能力の輪プロジェクト #才能診断");
+    return lines.join("\n");
+  }
+
+  async function shareResult(result) {
+    const text = buildShareText(result);
+    shareHint.textContent = "";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "才能×ホロスコープ 16タイプ診断結果",
+          text,
+          url: result.url
+        });
+        shareHint.textContent = "共有しました！";
         return;
+      } catch (e) {
+        // キャンセル等
       }
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: "才能×ホロスコープ診断 結果",
-            text: latestShareText
-          });
-          shareMsg.textContent = "共有メニューを開きました。";
-        } catch (e) {
-          shareMsg.textContent = "共有がキャンセルされました。";
-        }
-      } else {
-        shareMsg.textContent = "このブラウザは共有機能に対応していないので、コピー機能を使ってね。";
-      }
-    };
-  </script>
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      shareHint.textContent = "結果をコピーしました！SNS/LINEに貼り付けてシェアできます。";
+    } catch (e) {
+      shareHint.textContent = "コピーに失敗しました。手動でテキストを選択してコピーしてください。";
+      alert(text);
+    }
+  }
+</script>
 </body>
 </html>
