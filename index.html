@@ -3,28 +3,32 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>才能診断（質問ページ）</title>
+  <title>能力の輪｜才能診断（48問）</title>
   <style>
     :root{ --bg:#0b1020; --card:#111a33; --txt:#e9ecf4; --muted:#a9b2cc; --line:rgba(255,255,255,.10); --accent:#7aa2ff; }
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
       background: linear-gradient(180deg,#0b1020,#070a12); color:var(--txt); }
-    .wrap{ max-width:920px; margin:0 auto; padding:24px; }
+    .wrap{ max-width:980px; margin:0 auto; padding:24px; }
     .card{ background: rgba(17,26,51,.92); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:18px; box-shadow:0 12px 30px rgba(0,0,0,.25); }
     .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
     .pill{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); font-size:12px; }
     .hr{ height:1px; background:var(--line); margin:14px 0; }
     h1{ font-size:20px; margin:0 0 8px; }
+    h2{ font-size:16px; margin:0 0 8px; }
     p{ margin:8px 0; color:var(--muted); line-height:1.7; }
-    .q{ font-weight:800; margin:10px 0; }
+    .q{ font-weight:900; margin:8px 0 10px; }
     .opt{ display:block; width:100%; text-align:left; padding:12px 12px; margin:10px 0;
       border-radius:12px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color:var(--txt); cursor:pointer; }
     .opt:hover{ border-color: rgba(122,162,255,.6); }
-    .btn{ background: var(--accent); color:#07102a; border:0; padding:10px 14px; border-radius: 12px; font-weight: 800; cursor:pointer; }
+    .btn{ background: var(--accent); color:#07102a; border:0; padding:10px 14px; border-radius: 12px; font-weight: 900; cursor:pointer; }
     .btn.sub{ background: transparent; color: var(--txt); border: 1px solid rgba(255,255,255,.14); }
     input{ width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px;
       border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); color:var(--txt); }
     label{ display:block; margin:10px 0 6px; color:var(--muted); font-size:12px; }
     .small{ font-size:12px; color:var(--muted); }
+    .warn{ color:#ffcf7a; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
   </style>
 </head>
 
@@ -32,167 +36,329 @@
 <div class="wrap">
 
   <div class="card" id="screenStart">
-    <h1>才能診断（質問ページ）</h1>
-    <p>ここがトップURL（/）で表示される「質問ページ」です。最後まで答えると result.html に遷移します。</p>
+    <h1>能力の輪｜才能診断（48問）</h1>
+    <p>48問に答えると、結果ページ（result.html）へ自動で移動します。</p>
 
     <div class="hr"></div>
 
-    <div class="row">
-      <div style="flex:1; min-width:260px;">
-        <h1 style="font-size:16px; margin:0 0 6px;">ホロスコープ（任意）</h1>
+    <div class="grid2">
+      <div>
+        <h2>ホロスコープ（任意）</h2>
         <label>太陽星座（例：Gemini）</label>
         <input id="sun" placeholder="Gemini / Aries / etc">
         <label>月星座（例：Leo）</label>
         <input id="moon" placeholder="Leo / Cancer / etc">
         <label>ASC（例：Libra）</label>
         <input id="asc" placeholder="Libra / Virgo / etc">
-        <p class="small">※ここは“入力を結果へ渡す”だけ。計算は後でOK。</p>
+        <p class="small">※ここは入力を結果へ渡すだけ（計算は後でOK）。</p>
       </div>
 
-      <div style="flex:1; min-width:260px;">
-        <p class="pill">画像は同階層に置いてOK</p>
+      <div>
+        <p class="pill">画像は同階層でOK</p>
         <p class="small">element_earth.png / element_fire.png / element_air.png / element_water.png</p>
         <button class="btn" id="btnStart">診断スタート</button>
-        <button class="btn sub" id="btnGoResult" style="margin-left:8px;">結果ページだけ開く</button>
+        <button class="btn sub" id="btnResetAll" style="margin-left:8px;">リセット</button>
+        <p class="small warn" id="debugMsg" style="margin-top:10px;"></p>
+        <p class="small">表示が変わらない時は URL 末尾に <b>?v=1</b> を付けて開いてね。</p>
       </div>
     </div>
   </div>
 
   <div class="card" id="screenQuiz" style="display:none;">
     <div class="row">
-      <div class="pill" id="progress">Q1 / 16</div>
-      <button class="btn sub" id="btnReset">最初から</button>
+      <div class="pill" id="progress">Q1 / 48</div>
+      <div>
+        <button class="btn sub" id="btnBack">1つ戻る</button>
+        <button class="btn sub" id="btnAbort" style="margin-left:8px;">最初へ</button>
+      </div>
     </div>
+
     <div class="hr"></div>
 
+    <div class="pill" id="axisTag">AXIS</div>
     <div class="q" id="qText"></div>
     <div id="options"></div>
 
-    <p class="small">※質問文と配点は後で差し替えOK。今は「遷移が動く完成形」を作っています。</p>
+    <div class="hr"></div>
+    <p class="small">回答：4段階（とても当てはまる=3 / やや=2 / あまり=1 / まったく=0）</p>
   </div>
 
 </div>
 
 <script>
-  // ======================
-  // 16才能（固定％の辞書）
-  // ※現時点では「最終結果の表示内容」を優先して、この並びを結果に渡します。
-  // ======================
-  const TALENTS_FIXED = [
-    { name:"学習探究", pct:92, desc:"興味を持ったテーマをとことん深く学び、知識として蓄えていく才能。" },
-    { name:"アイディア", pct:88, desc:"いろんな知識や経験をつなぎ合わせて、新しいアイデアを生み出す才能。" },
-    { name:"仕組み", pct:80, desc:"物事を仕組み化・ルール化して、“勝手に回る状態”をつくる才能。" },
-    { name:"本質", pct:76, desc:"表面的な情報にとらわれず、「結局いちばん大事なポイント」を見抜く才能。" },
-    { name:"整理整頓", pct:70, desc:"ごちゃついた状態を分類・整理し、スッキリ使いやすい形に整え直す才能。" },
-    { name:"ビジョン", pct:68, desc:"自分なりの価値観をもとに、進みたい方向や未来のイメージを描く才能。" },
-    { name:"寄り添い", pct:65, desc:"相手の感情の深いところを感じ取り、その人のペースで支える才能。" },
-    { name:"調和", pct:63, desc:"人と人の摩擦を和らげ、安心・安全な空気をつくる才能。" },
-    { name:"育成", pct:60, desc:"小さな成長の芽を見つけ、信じて伴走し続ける才能。" },
-    { name:"バランス", pct:58, desc:"チーム全体を見ながら、負担や役割のバランスを整える才能。" },
-    { name:"目標達成", pct:55, desc:"決めたゴールに向かって粘り強く進み、達成まで持っていく才能。" },
-    { name:"修復", pct:52, desc:"うまくいかなくなった物事を立て直し、もう一度動き出すように整える才能。" },
-    { name:"開放", pct:48, desc:"場の空気をふわっと明るくし、人の心をオープンにしていく才能。" },
-    { name:"表現", pct:45, desc:"言葉や表情・表現を通して、自分の内側を外に届ける才能。" },
-    { name:"求心", pct:42, desc:"「この指とまれ」で人を自然と集め、仲間を増やしていく才能。" },
-    { name:"先導", pct:38, desc:"人より半歩先に立って、「こっちへ行こう」と道を示す才能。" },
-  ];
+/* ========= 16才能（確定名称＆説明） ========= */
+const TALENT_DEFS = [
+  { name:"学習探究", desc:"興味を持ったテーマをとことん深く学び、知識として蓄えていく才能。" },
+  { name:"アイディア", desc:"いろんな知識や経験をつなぎ合わせて、新しいアイデアを生み出す才能。" },
+  { name:"仕組み", desc:"物事を仕組み化・ルール化して、“勝手に回る状態”をつくる才能。" },
+  { name:"本質", desc:"表面的な情報にとらわれず、「結局いちばん大事なポイント」を見抜く才能。" },
+  { name:"整理整頓", desc:"ごちゃついた状態を分類・整理し、スッキリ使いやすい形に整え直す才能。" },
+  { name:"ビジョン", desc:"自分なりの価値観をもとに、進みたい方向や未来のイメージを描く才能。" },
+  { name:"寄り添い", desc:"相手の感情の深いところを感じ取り、その人のペースで支える才能。" },
+  { name:"調和", desc:"人と人の摩擦を和らげ、安心・安全な空気をつくる才能。" },
+  { name:"育成", desc:"小さな成長の芽を見つけ、信じて伴走し続ける才能。" },
+  { name:"バランス", desc:"チーム全体を見ながら、負担や役割のバランスを整える才能。" },
+  { name:"目標達成", desc:"決めたゴールに向かって粘り強く進み、達成まで持っていく才能。" },
+  { name:"修復", desc:"うまくいかなくなった物事を立て直し、もう一度動き出すように整える才能。" },
+  { name:"開放", desc:"場の空気をふわっと明るくし、人の心をオープンにしていく才能。" },
+  { name:"表現", desc:"言葉や表情・表現を通して、自分の内側を外に届ける才能。" },
+  { name:"求心", desc:"「この指とまれ」で人を自然と集め、仲間を増やしていく才能。" },
+  { name:"先導", desc:"人より半歩先に立って、「こっちへ行こう」と道を示す才能。" },
+];
+const TALENT_KEYS = TALENT_DEFS.map(x=>x.name);
 
-  // ======================
-  // 質問（16問）※仮
-  // A/Bで「4フィールド」に加点するだけの簡易版
-  // 後で才能16に紐づける配点に差し替え可能
-  // ======================
-  const QUESTIONS = Array.from({length:16}).map((_,i)=>{
-    const n = i+1;
-    const fields = ["EARTH","FIRE","AIR","WATER"];
-    const aField = fields[i % 4];
-    const bField = fields[(i+1) % 4];
-    return {
-      text: `Q${n}. 直感で近い方を選んでください`,
-      options: [
-        { label:"A：計画して積み上げる", field:aField },
-        { label:"B：ひらめきで動きながら整える", field:bField },
-      ]
-    };
-  });
+const FIELD_KEYS = ["EARTH","FIRE","AIR","WATER"];
+const AXIS_KEYS  = ["X1","X2","I1","I2","T1","T2","R1","R2"];
 
-  // 状態
-  let idx = 0;
-  let fieldScore = { EARTH:0, FIRE:0, AIR:0, WATER:0 };
+/* ========= 8軸の所属 ========= */
+const AXIS_META = {
+  X1:{ field:"EARTH", label:"EARTH｜X1：構築・段取り軸" },
+  X2:{ field:"EARTH", label:"EARTH｜X2：遂行・やり切り軸" },
+  I1:{ field:"FIRE",  label:"FIRE｜I1：発信・存在感軸" },
+  I2:{ field:"FIRE",  label:"FIRE｜I2：説得・推進軸" },
+  T1:{ field:"AIR",   label:"AIR｜T1：ロジカル・分析軸" },
+  T2:{ field:"AIR",   label:"AIR｜T2：学習・探究軸" },
+  R1:{ field:"WATER", label:"WATER｜R1：共感・ケア軸" },
+  R2:{ field:"WATER", label:"WATER｜R2：協働・チーム軸" },
+};
 
-  // 画面
-  const screenStart = document.getElementById("screenStart");
-  const screenQuiz  = document.getElementById("screenQuiz");
-  const progress    = document.getElementById("progress");
-  const qText       = document.getElementById("qText");
-  const optionsEl   = document.getElementById("options");
+/* ========= 48問（さやちゃん提供テキストをそのまま） ========= */
+const QUESTIONS = [
+  // X1
+  { axis:"X1", text:"やることを紙やアプリにリスト化してから行動することが多い。" },
+  { axis:"X1", text:"物事を進める前に、手順や流れを整理したくなる。" },
+  { axis:"X1", text:"「この順番でやると効率がいい」と考えながら動いている。" },
+  { axis:"X1", text:"仕事や家事のやり方を、もっと楽になるように工夫するのが好きだ。" },
+  { axis:"X1", text:"みんなが迷わないように、ルールや仕組みを整えたくなる。" },
+  { axis:"X1", text:"ゴールから逆算してスケジュールを組むのが得意だと感じる。" },
 
-  document.getElementById("btnGoResult").addEventListener("click", ()=>{
-    location.href = "./result.html";
-  });
+  // X2
+  { axis:"X2", text:"途中で投げ出すのが嫌で、つい最後までやり切ってしまう。" },
+  { axis:"X2", text:"締め切りが近づくと、むしろ集中力が高まるほうだ。" },
+  { axis:"X2", text:"「途中までやって放置」が気持ち悪く感じる。" },
+  { axis:"X2", text:"大変でも、一度引き受けたことはやり遂げたいと思う。" },
+  { axis:"X2", text:"人から頼まれたことを忘れないよう、きちんと終わらせようとする。" },
+  { axis:"X2", text:"長期的なプロジェクトでも、コツコツ続けることができる。" },
 
-  document.getElementById("btnStart").addEventListener("click", ()=>{
-    idx = 0;
-    fieldScore = { EARTH:0, FIRE:0, AIR:0, WATER:0 };
-    screenStart.style.display = "none";
-    screenQuiz.style.display = "block";
-    renderQ();
-  });
+  // I1
+  { axis:"I1", text:"人前で話すことに、そこまで強い抵抗はない。" },
+  { axis:"I1", text:"自分の考えや経験を、SNSやブログなどで発信したくなる。" },
+  { axis:"I1", text:"場が静かすぎると、つい話題を振ったり盛り上げたりしてしまう。" },
+  { axis:"I1", text:"自分の意見をハッキリ言う方だと思う。" },
+  { axis:"I1", text:"初対面の人とも、わりとすぐに会話を広げられる。" },
+  { axis:"I1", text:"「あなたがいると場の雰囲気が明るくなる」と言われたことがある。" },
 
-  document.getElementById("btnReset").addEventListener("click", ()=> location.reload());
+  // I2
+  { axis:"I2", text:"みんなの意見を聞いたうえで、「じゃあこうしよう」と方向性を示すことが多い。" },
+  { axis:"I2", text:"企画やアイデアを、人に分かりやすくプレゼンするのが好きだ。" },
+  { axis:"I2", text:"相手に納得してもらえる説明の仕方を考えるのが得意だ。" },
+  { axis:"I2", text:"チームや周囲を巻き込みながら、物事を前に進めるのが好きだ。" },
+  { axis:"I2", text:"自分がいいと思ったものは、人にも勧めたくなる。" },
+  { axis:"I2", text:"会議や話し合いで、最終的に結論をまとめる役割になることが多い。" },
 
-  function renderQ(){
-    const q = QUESTIONS[idx];
-    progress.textContent = `Q${idx+1} / ${QUESTIONS.length}`;
-    qText.textContent = q.text;
-    optionsEl.innerHTML = "";
+  // T1
+  { axis:"T1", text:"情報を聞いたとき「なぜそうなるのか？」を考えたくなる。" },
+  { axis:"T1", text:"問題が起きると、原因を分析して再発防止策を考える。" },
+  { axis:"T1", text:"データや数字を見て判断するのが好きだ。" },
+  { axis:"T1", text:"物事のメリット・デメリットを整理してから決めたいタイプだ。" },
+  { axis:"T1", text:"複雑な話を構造化して、図や箇条書きでまとめるのが得意だ。" },
+  { axis:"T1", text:"先のリスクや抜け漏れに、比較的早く気づく方だ。" },
 
-    q.options.forEach(opt=>{
-      const btn = document.createElement("button");
-      btn.className = "opt";
-      btn.textContent = opt.label;
-      btn.addEventListener("click", ()=>{
-        fieldScore[opt.field] += 1;
-        idx += 1;
-        if (idx >= QUESTIONS.length){
-          finish();
-        } else {
-          renderQ();
-        }
-      });
-      optionsEl.appendChild(btn);
-    });
+  // T2
+  { axis:"T2", text:"興味を持ったテーマは、ネットや本で徹底的に調べたくなる。" },
+  { axis:"T2", text:"学びのための講座や本に、お金や時間を使うことに抵抗が少ない。" },
+  { axis:"T2", text:"「なぜ？」「どういう仕組み？」と深く掘り下げて考えるのが好きだ。" },
+  { axis:"T2", text:"一度ハマった分野については、人より詳しくなりがちだ。" },
+  { axis:"T2", text:"新しい知識や考え方に触れるとワクワクする。" },
+  { axis:"T2", text:"学んだことを自分なりに整理して、メモやノートにまとめることが多い。" },
+
+  // R1
+  { axis:"R1", text:"人の表情や声のトーンから、気持ちの変化に敏感だと思う。" },
+  { axis:"R1", text:"悩んでいる人の話を聞くと、つい親身になってしまう。" },
+  { axis:"R1", text:"相手が傷つかないような言い方を選びがちだ。" },
+  { axis:"R1", text:"相談されることが多い方だ。" },
+  { axis:"R1", text:"相手の立場に立って考える癖がある。" },
+  { axis:"R1", text:"誰かが疎外されている雰囲気に気づくと、放っておけない。" },
+
+  // R2
+  { axis:"R2", text:"一人でやるより、誰かと一緒に進める方がやる気が出る。" },
+  { axis:"R2", text:"チームのメンバーそれぞれの強みや個性を意識して見ている。" },
+  { axis:"R2", text:"役割分担やスケジュールを調整することが多い。" },
+  { axis:"R2", text:"場の空気がギスギスしていると、なんとか和らげたくなる。" },
+  { axis:"R2", text:"みんなが気持ちよく働けるように、裏でサポートするのが得意だ。" },
+  { axis:"R2", text:"会議や作業の前後に、メンバーに声をかけてフォローすることが多い。" },
+].map((q,i)=>({ id:i+1, ...q }));
+
+/* ========= 8軸→16才能 変換ウェイト（調整可） ========= */
+const W = (obj)=>obj; // 見やすくするだけ
+const TALENT_WEIGHTS = {
+  "学習探究": W({ T2:1.0 }),
+  "アイディア": W({ T2:0.8, T1:0.2 }),
+  "仕組み": W({ X1:0.9, T1:0.1 }),
+  "本質": W({ T1:0.7, T2:0.2, I2:0.1 }),
+  "整理整頓": W({ X1:0.6, T1:0.4 }),
+  "ビジョン": W({ T2:0.6, X1:0.2, I2:0.2 }),
+  "寄り添い": W({ R1:0.8, R2:0.2 }),
+  "調和": W({ R2:0.7, R1:0.3 }),
+  "育成": W({ R1:0.5, R2:0.5 }),
+  "バランス": W({ R2:0.8, X1:0.2 }),
+  "目標達成": W({ X2:0.7, X1:0.2, I2:0.1 }),
+  "修復": W({ T1:0.6, X2:0.4 }),
+  "開放": W({ I1:0.7, R1:0.3 }),
+  "表現": W({ I1:1.0 }),
+  "求心": W({ I1:0.4, I2:0.4, R2:0.2 }),
+  "先導": W({ I2:0.7, I1:0.2, X2:0.1 }),
+};
+
+/* ========= UI ========= */
+const screenStart = document.getElementById("screenStart");
+const screenQuiz  = document.getElementById("screenQuiz");
+const progress    = document.getElementById("progress");
+const qText       = document.getElementById("qText");
+const optionsEl   = document.getElementById("options");
+const axisTag     = document.getElementById("axisTag");
+const debugMsg    = document.getElementById("debugMsg");
+
+document.getElementById("btnResetAll").addEventListener("click", ()=>{
+  localStorage.removeItem("talentResult");
+  location.reload();
+});
+document.getElementById("btnAbort").addEventListener("click", ()=> location.reload());
+
+/* ========= 初期化（ここでエラーがあれば画面に出す） ========= */
+try{
+  if (QUESTIONS.length !== 48) {
+    debugMsg.textContent = `⚠️ QUESTIONSが${QUESTIONS.length}問です（48問必要）`;
+  } else {
+    debugMsg.textContent = "";
   }
+}catch(e){
+  debugMsg.textContent = "⚠️ 初期化エラー：" + e.message;
+}
 
-  function finish(){
-    // 4フィールドを％に正規化（合計100）
-    const total = Object.values(fieldScore).reduce((a,b)=>a+b,0) || 1;
-    const fieldsPct = {};
-    Object.keys(fieldScore).forEach(k=>{
-      fieldsPct[k] = Math.round((fieldScore[k] / total) * 100);
+/* ========= 状態 ========= */
+let idx = 0;
+let answers = []; // {qId, axis, value}
+let axisScore  = Object.fromEntries(AXIS_KEYS.map(k=>[k,0]));    // 0〜18（6問×最大3）
+let fieldScore = Object.fromEntries(FIELD_KEYS.map(k=>[k,0]));   // 合計
+let maxAxis = 6 * 3;
+
+const SCALE = [
+  { label:"とても当てはまる", value:3 },
+  { label:"やや当てはまる", value:2 },
+  { label:"あまり当てはまらない", value:1 },
+  { label:"まったく当てはまらない", value:0 },
+];
+
+document.getElementById("btnStart").addEventListener("click", ()=>{
+  idx = 0;
+  answers = [];
+  axisScore  = Object.fromEntries(AXIS_KEYS.map(k=>[k,0]));
+  fieldScore = Object.fromEntries(FIELD_KEYS.map(k=>[k,0]));
+  screenStart.style.display = "none";
+  screenQuiz.style.display  = "block";
+  renderQ();
+});
+
+document.getElementById("btnBack").addEventListener("click", ()=>{
+  if (answers.length === 0) return;
+  const last = answers.pop();
+  axisScore[last.axis] -= last.value;
+  const f = AXIS_META[last.axis].field;
+  fieldScore[f] -= last.value;
+  idx = Math.max(0, idx-1);
+  renderQ();
+});
+
+function renderQ(){
+  const q = QUESTIONS[idx];
+  progress.textContent = `Q${idx+1} / ${QUESTIONS.length}`;
+  axisTag.textContent = AXIS_META[q.axis].label;
+  qText.textContent = q.text;
+
+  optionsEl.innerHTML = "";
+  SCALE.forEach(opt=>{
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    btn.textContent = opt.label;
+
+    btn.addEventListener("click", ()=>{
+      const v = opt.value;
+      answers.push({ qId:q.id, axis:q.axis, value:v });
+
+      axisScore[q.axis] += v;
+      const f = AXIS_META[q.axis].field;
+      fieldScore[f] += v;
+
+      idx++;
+      if (idx >= QUESTIONS.length) finish();
+      else renderQ();
     });
 
-    // メインフィールド
-    const mainField = Object.entries(fieldScore).sort((a,b)=>b[1]-a[1])[0][0];
+    optionsEl.appendChild(btn);
+  });
+}
 
-    // ホロ入力
-    const horoscope = {
-      sun:  document.getElementById("sun").value.trim(),
-      moon: document.getElementById("moon").value.trim(),
-      asc:  document.getElementById("asc").value.trim(),
-    };
+function pct(n){ return Math.max(0, Math.min(100, Math.round(n))); }
 
-    // ✅ここが最終盤：結果を保存して result.html に遷移
-    const result = {
-      mainField,
-      fields: fieldsPct,
-      talents: TALENTS_FIXED,   // まずは確定％をそのまま渡す（後で診断連動に変えられる）
-      horoscope
-    };
+function finish(){
+  // 8軸を0-1に正規化
+  const axisNorm = {};
+  AXIS_KEYS.forEach(k=>{
+    axisNorm[k] = (axisScore[k] || 0) / maxAxis; // 0..1
+  });
 
-    localStorage.setItem("talentResult", JSON.stringify(result));
-    location.href = "./result.html";
-  }
+  // 16才能 raw
+  const talentRaw = {};
+  TALENT_KEYS.forEach(t=>{
+    const w = TALENT_WEIGHTS[t] || {};
+    let s = 0;
+    Object.entries(w).forEach(([axis, weight])=>{
+      s += (axisNorm[axis] || 0) * weight;
+    });
+    talentRaw[t] = s;
+  });
+
+  // talents pct（最大を100に）
+  const maxT = Math.max(...Object.values(talentRaw), 1e-9);
+  const talents = TALENT_DEFS.map(def=>{
+    const raw = talentRaw[def.name] || 0;
+    const p = pct((raw / maxT) * 100);
+    return { name:def.name, pct:p, desc:def.desc, raw };
+  }).sort((a,b)=> b.pct - a.pct);
+
+  // 4フィールド％（合計100）
+  const totalF = Object.values(fieldScore).reduce((a,b)=>a+b,0) || 1;
+  const fieldsPct = {};
+  FIELD_KEYS.forEach(k=>{
+    fieldsPct[k] = pct((fieldScore[k] / totalF) * 100);
+  });
+
+  // main field
+  const mainField = Object.entries(fieldScore).sort((a,b)=>b[1]-a[1])[0]?.[0] || "EARTH";
+
+  // horoscope input
+  const horoscope = {
+    sun:  document.getElementById("sun").value.trim(),
+    moon: document.getElementById("moon").value.trim(),
+    asc:  document.getElementById("asc").value.trim(),
+  };
+
+  // 保存
+  const result = {
+    mainField,
+    fields: fieldsPct,
+    talents,
+    axisScore,
+    fieldScore,
+    axisNorm,
+    horoscope,
+    answeredAt: new Date().toISOString()
+  };
+
+  localStorage.setItem("talentResult", JSON.stringify(result));
+  location.href = "./result.html";
+}
 </script>
 </body>
 </html>
