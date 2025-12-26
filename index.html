@@ -46,11 +46,7 @@
         <h2>ホロスコープ（任意）</h2>
         <label>太陽星座（例：Gemini）</label>
         <input id="sun" placeholder="Gemini / Aries / etc">
-        <label>月星座（例：Leo）</label>
-        <input id="moon" placeholder="Leo / Cancer / etc">
-        <label>ASC（例：Libra）</label>
-        <input id="asc" placeholder="Libra / Virgo / etc">
-        <p class="small">※ここは入力を結果へ渡すだけ（計算は後でOK）。</p>
+        <p class="small">※太陽星座だけ入力でOK（わからなければ空欄でもOK）。</p>
       </div>
 
       <div>
@@ -59,7 +55,7 @@
         <button class="btn" id="btnStart">診断スタート</button>
         <button class="btn sub" id="btnResetAll" style="margin-left:8px;">リセット</button>
         <p class="small warn" id="debugMsg" style="margin-top:10px;"></p>
-        <p class="small">表示が変わらない時は URL 末尾に <b>?v=1</b> を付けて開いてね。</p>
+        <p class="small">更新が反映されない時は URL 末尾に <b>?v=1</b> を付けて開いてね。</p>
       </div>
     </div>
   </div>
@@ -122,7 +118,7 @@ const AXIS_META = {
   R2:{ field:"WATER", label:"WATER｜R2：協働・チーム軸" },
 };
 
-/* ========= 48問（さやちゃん提供テキストをそのまま） ========= */
+/* ========= 48問（提供テキストそのまま） ========= */
 const QUESTIONS = [
   // X1
   { axis:"X1", text:"やることを紙やアプリにリスト化してから行動することが多い。" },
@@ -190,7 +186,7 @@ const QUESTIONS = [
 ].map((q,i)=>({ id:i+1, ...q }));
 
 /* ========= 8軸→16才能 変換ウェイト（調整可） ========= */
-const W = (obj)=>obj; // 見やすくするだけ
+const W = (obj)=>obj;
 const TALENT_WEIGHTS = {
   "学習探究": W({ T2:1.0 }),
   "アイディア": W({ T2:0.8, T1:0.2 }),
@@ -225,7 +221,6 @@ document.getElementById("btnResetAll").addEventListener("click", ()=>{
 });
 document.getElementById("btnAbort").addEventListener("click", ()=> location.reload());
 
-/* ========= 初期化（ここでエラーがあれば画面に出す） ========= */
 try{
   if (QUESTIONS.length !== 48) {
     debugMsg.textContent = `⚠️ QUESTIONSが${QUESTIONS.length}問です（48問必要）`;
@@ -238,10 +233,10 @@ try{
 
 /* ========= 状態 ========= */
 let idx = 0;
-let answers = []; // {qId, axis, value}
+let answers = [];
 let axisScore  = Object.fromEntries(AXIS_KEYS.map(k=>[k,0]));    // 0〜18（6問×最大3）
 let fieldScore = Object.fromEntries(FIELD_KEYS.map(k=>[k,0]));   // 合計
-let maxAxis = 6 * 3;
+const maxAxis = 6 * 3;
 
 const SCALE = [
   { label:"とても当てはまる", value:3 },
@@ -299,7 +294,11 @@ function renderQ(){
   });
 }
 
-function pct(n){ return Math.max(0, Math.min(100, Math.round(n))); }
+function pct(n){
+  n = Number(n);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
 
 function finish(){
   // 8軸を0-1に正規化
@@ -337,11 +336,9 @@ function finish(){
   // main field
   const mainField = Object.entries(fieldScore).sort((a,b)=>b[1]-a[1])[0]?.[0] || "EARTH";
 
-  // horoscope input
+  // horoscope（太陽だけ）
   const horoscope = {
-    sun:  document.getElementById("sun").value.trim(),
-    moon: document.getElementById("moon").value.trim(),
-    asc:  document.getElementById("asc").value.trim(),
+    sun: document.getElementById("sun").value.trim(),
   };
 
   // 保存
