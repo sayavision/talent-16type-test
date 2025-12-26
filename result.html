@@ -46,7 +46,6 @@
 <div class="wrap">
   <div class="card">
     <h1>能力の輪｜診断結果</h1>
-    <p class="small">※質問ページで回答すると、このページに結果が表示されます。</p>
     <div class="row">
       <button class="btn sub" id="btnBackToQuiz">質問ページに戻る</button>
       <button class="btn sub" id="btnReset">結果リセット</button>
@@ -89,31 +88,30 @@
 
     <div class="hr"></div>
 
-    <h2>上位３つの才能（各200〜300字）</h2>
+    <h2>上位３つの才能（各フィードバック）</h2>
     <div class="row" id="top3Boxes"></div>
 
     <div class="hr"></div>
 
-    <h2>上位３つの掛け合わせフィードバック（約800字）</h2>
+    <h2>上位３つの掛け合わせフィードバック</h2>
     <div class="box">
       <p id="combo800" style="white-space:pre-wrap; margin:0;"></p>
-      <p class="small" id="comboCount"></p>
     </div>
 
     <div class="hr"></div>
 
-    <h2>太陽星座×才能フィードバック（約800字）</h2>
+    <h2>太陽星座×才能フィードバック</h2>
     <div class="row">
       <div class="col box">
         <h3>太陽星座（任意）</h3>
-        <label>太陽星座（例：Gemini）</label>
-        <input id="sun" placeholder="Gemini / Aries / etc">
+        <label>太陽星座 or 誕生日（例：Gemini / 双子座 / 1990/6/4）</label>
+        <input id="sun" placeholder="Gemini / 双子座 / 1990/6/4">
+        <div class="pill" id="sunResolved" style="margin-top:10px; display:none;"></div>
+        <p class="small" id="sunMeaning" style="margin-top:8px;"></p>
         <button class="btn sub" id="btnRegenStar" style="margin-top:10px;">太陽×才能を再生成</button>
-        <p class="small">※太陽星座だけでOK。入力はこの端末のlocalStorageに保存されます。</p>
       </div>
       <div class="col box">
         <p id="star800" style="white-space:pre-wrap; margin:0;"></p>
-        <p class="small" id="starCount"></p>
       </div>
     </div>
 
@@ -128,6 +126,7 @@
 </div>
 
 <script>
+/* ======= 表示用データ ======= */
 const FIELD_IMAGE = { EARTH:"./element_earth.png", FIRE:"./element_fire.png", AIR:"./element_air.png", WATER:"./element_water.png" };
 const FIELD_INFO = {
   EARTH:{ name:"EARTH｜形にするフィールド", short:"段取り・仕組み・継続で、未来を現実に着地させるタイプ。日々の積み上げで強くなる。" },
@@ -135,12 +134,187 @@ const FIELD_INFO = {
   AIR:{   name:"AIR｜ひらめくフィールド", short:"分析・学習・言語化で、可能性を広げるタイプ。理解を深めて価値に変える。" },
   WATER:{ name:"WATER｜つなぐフィールド", short:"共感・調和・協働で、人と場を整えるタイプ。安心感が推進力になる。" },
 };
-const SIGN = {
-  Aries:"行動と突破", Taurus:"継続と実感", Gemini:"好奇心と言語", Cancer:"共感と保護",
-  Leo:"表現と誇り", Virgo:"整えると改善", Libra:"調和と美意識", Scorpio:"深掘りと変容",
-  Sagittarius:"拡大と探究", Capricorn:"構築と成果", Aquarius:"革新と俯瞰", Pisces:"直感と受容"
+
+/* ======= さやちゃんの学習：星座×資質（BEST3＋補足） =======
+   ※資質名は日本語のまま保持（画面表示用）
+*/
+const SIGN_STRENGTHS = {
+  Aries: { jp:"牡羊座", theme:"行動・スピード・突破力", best:[
+    { name:"活発性", level:3, c:"行動の速さ・動きながら考える" },
+    { name:"達成欲", level:3, c:"ゴールへまっすぐ走る" },
+    { name:"指令性", level:3, c:"グイっと前に出てリードする" },
+  ], sub:["競争性","自己確信","自我"] },
+  Taurus:{ jp:"牡牛座", theme:"安定・継続・五感・粘り強さ", best:[
+    { name:"慎重さ", level:3, c:"じっくり・丁寧・リスク管理" },
+    { name:"規律性", level:3, c:"安定したペース・続ける才能" },
+    { name:"責任感", level:2, c:"任されたことを守る" },
+  ], sub:["回復志向","公平性","調和性"] },
+  Gemini:{ jp:"双子座", theme:"情報・コミュニケーション・スピード思考", best:[
+    { name:"コミュニケーション", level:3, c:"喋る・伝える才能" },
+    { name:"社交性", level:3, c:"人とのつながりが才能" },
+    { name:"着想", level:2, c:"アイデアの速さ" },
+  ], sub:["活発性","学習欲","分析思考"] },
+  Cancer:{ jp:"蟹座", theme:"共感・保護・感情・家族性", best:[
+    { name:"共感性", level:3, c:"感情を読むのが天才的" },
+    { name:"包含", level:3, c:"仲間として受け入れる" },
+    { name:"親密性", level:2, c:"深い関わりを好む" },
+  ], sub:["調和性","個別化","運命思考"] },
+  Leo:{ jp:"獅子座", theme:"表現・存在感・創造性・自己実現", best:[
+    { name:"自己確信", level:3, c:"自信・堂々とした表現" },
+    { name:"活発性", level:2, c:"明るく外へ向かう力" },
+    { name:"自我", level:2, c:"認められたい・称賛されたい" },
+  ], sub:["コミュニケーション","未来志向","最上志向"] },
+  Virgo:{ jp:"乙女座", theme:"分析・改善・実務的・細部の才能", best:[
+    { name:"分析思考", level:3, c:"事実に基づき考える" },
+    { name:"回復志向", level:3, c:"改善・修正の天才" },
+    { name:"慎重さ", level:2, c:"リスク回避能力" },
+  ], sub:["規律性","責任感","アレンジ"] },
+  Libra:{ jp:"天秤座", theme:"調和・美・関係性・バランス", best:[
+    { name:"適応性", level:3, c:"調整・しなやかさ" },
+    { name:"調和性", level:3, c:"平和をつくる才能" },
+    { name:"コミュニケーション", level:2, c:"言葉選びが上手" },
+  ], sub:["分析思考","個別化"] },
+  Scorpio:{ jp:"蠍座", theme:"深掘り・集中・変容・情熱の芯", best:[
+    { name:"個別化", level:3, c:"一人を深く理解する" },
+    { name:"内省", level:3, c:"深く掘り下げる" },
+    { name:"戦略性", level:2, c:"裏側や本質を読む" },
+  ], sub:["自己確信","共感性","アレンジ"] },
+  Sagittarius:{ jp:"射手座", theme:"自由・探求・冒険・哲学", best:[
+    { name:"未来志向", level:3, c:"理想を語る力" },
+    { name:"着想", level:3, c:"アイデアの広がり" },
+    { name:"学習欲", level:2, c:"探求心が強い" },
+  ], sub:["活発性","信念"] },
+  Capricorn:{ jp:"山羊座", theme:"実現・構築・結果主義・責任感", best:[
+    { name:"達成欲", level:3, c:"ゴールをつかむ力" },
+    { name:"責任感", level:3, c:"約束を守る・任される" },
+    { name:"規律性", level:3, c:"計画を守る" },
+  ], sub:["戦略性","自我"] },
+  Aquarius:{ jp:"水瓶座", theme:"革新・個性・未来・客観性", best:[
+    { name:"着想", level:3, c:"独創的アイデア" },
+    { name:"未来志向", level:3, c:"未来のビジョンを描く" },
+    { name:"分析思考", level:2, c:"客観・ロジック" },
+  ], sub:["学習欲","適応性"] },
+  Pisces:{ jp:"魚座", theme:"癒し・直感・共感・境界が溶ける", best:[
+    { name:"共感性", level:3, c:"感情の深い共鳴" },
+    { name:"適応性", level:3, c:"ふわっと馴染む" },
+    { name:"運命思考", level:2, c:"“流れ”を感じる" },
+  ], sub:["収集心","個別化"] },
 };
 
+/* ======= 星座入力の別名対応 ======= */
+const SIGN_ALIAS = {
+  "おひつじ座":"Aries","牡羊座":"Aries","aries":"Aries",
+  "おうし座":"Taurus","牡牛座":"Taurus","taurus":"Taurus",
+  "ふたご座":"Gemini","双子座":"Gemini","gemini":"Gemini",
+  "かに座":"Cancer","蟹座":"Cancer","cancer":"Cancer",
+  "しし座":"Leo","獅子座":"Leo","leo":"Leo",
+  "おとめ座":"Virgo","乙女座":"Virgo","virgo":"Virgo",
+  "てんびん座":"Libra","天秤座":"Libra","libra":"Libra",
+  "さそり座":"Scorpio","蠍座":"Scorpio","scorpio":"Scorpio",
+  "いて座":"Sagittarius","射手座":"Sagittarius","sagittarius":"Sagittarius",
+  "やぎ座":"Capricorn","山羊座":"Capricorn","capricorn":"Capricorn",
+  "みずがめ座":"Aquarius","水瓶座":"Aquarius","aquarius":"Aquarius",
+  "うお座":"Pisces","魚座":"Pisces","pisces":"Pisces"
+};
+
+/* ======= 資質→16才能（接続辞書） =======
+   ここが精度アップの肝。星座BEST資質から、相性の良い“才能語”を文章に混ぜる。
+*/
+const STRENGTH_TO_TALENTS = {
+  "学習欲":["学習探究","アイディア","本質"],
+  "分析思考":["本質","整理整頓","仕組み"],
+  "着想":["アイディア","ビジョン","表現"],
+  "未来志向":["ビジョン","求心","先導"],
+  "コミュニケーション":["表現","開放","求心"],
+  "社交性":["求心","開放","先導"],
+  "活発性":["先導","開放","目標達成"],
+  "達成欲":["目標達成","仕組み","整理整頓"],
+  "指令性":["先導","求心","目標達成"],
+  "規律性":["仕組み","整理整頓","目標達成"],
+  "慎重さ":["整理整頓","本質","修復"],
+  "責任感":["目標達成","バランス","育成"],
+  "回復志向":["修復","仕組み","本質"],
+  "共感性":["寄り添い","調和","育成"],
+  "包含":["調和","バランス","育成"],
+  "親密性":["寄り添い","育成","調和"],
+  "適応性":["バランス","調和","開放"],
+  "調和性":["調和","バランス","寄り添い"],
+  "個別化":["寄り添い","育成","本質"],
+  "内省":["本質","ビジョン","学習探究"],
+  "戦略性":["ビジョン","本質","仕組み"],
+  "運命思考":["寄り添い","ビジョン","調和"],
+  "自我":["表現","先導","求心"],
+  "自己確信":["先導","表現","ビジョン"],
+  "信念":["ビジョン","目標達成","本質"],
+  "収集心":["学習探究","アイディア","本質"],
+  "競争性":["目標達成","先導","求心"],
+  "公平性":["バランス","調和","仕組み"],
+  "アレンジ":["仕組み","バランス","修復"],
+};
+
+/* ======= テキストの字数調整 ======= */
+function fitToRange(text, minLen, maxLen){
+  let s = (text || "").trim();
+  const pad = "。あなたの強みは、使うほど現実で洗練されます。小さく試して、反応を見て、磨き直す。この循環が才能を最短で育てます";
+  while (s.length < minLen) s += pad.slice(0, Math.min(pad.length, minLen - s.length));
+  if (s.length > maxLen) s = s.slice(0, maxLen);
+  return s;
+}
+
+/* ======= 太陽星座の自動判定（誕生日対応） ======= */
+function parseDateLike(str){
+  const s = (str || "").trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  if (m) return { y:+m[1], mo:+m[2], d:+m[3] };
+  m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})$/);
+  if (m) return { y:null, mo:+m[1], d:+m[2] };
+  m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+  if (m) return { y:+m[1], mo:+m[2], d:+m[3] };
+  return null;
+}
+function zodiacByMonthDay(mo, d){
+  if ((mo===3 && d>=21) || (mo===4 && d<=19)) return "Aries";
+  if ((mo===4 && d>=20) || (mo===5 && d<=20)) return "Taurus";
+  if ((mo===5 && d>=21) || (mo===6 && d<=20)) return "Gemini";
+  if ((mo===6 && d>=21) || (mo===7 && d<=22)) return "Cancer";
+  if ((mo===7 && d>=23) || (mo===8 && d<=22)) return "Leo";
+  if ((mo===8 && d>=23) || (mo===9 && d<=22)) return "Virgo";
+  if ((mo===9 && d>=23) || (mo===10 && d<=22)) return "Libra";
+  if ((mo===10 && d>=23) || (mo===11 && d<=21)) return "Scorpio";
+  if ((mo===11 && d>=22) || (mo===12 && d<=21)) return "Sagittarius";
+  if ((mo===12 && d>=22) || (mo===1 && d<=19)) return "Capricorn";
+  if ((mo===1 && d>=20) || (mo===2 && d<=18)) return "Aquarius";
+  if ((mo===2 && d>=19) || (mo===3 && d<=20)) return "Pisces";
+  return null;
+}
+function resolveSun(input){
+  const raw = (input || "").trim();
+  if (!raw) return { raw, key:null, label:"未入力", meaning:"" };
+
+  const lower = raw.toLowerCase().replace(/\s/g,"");
+  const aliasKey = SIGN_ALIAS[raw] || SIGN_ALIAS[lower];
+  if (aliasKey && SIGN_STRENGTHS[aliasKey]){
+    const s = SIGN_STRENGTHS[aliasKey];
+    return { raw, key:aliasKey, label:`${aliasKey}（${s.jp}）`, meaning:`テーマ：${s.theme}` };
+  }
+  if (SIGN_STRENGTHS[raw]){
+    const s = SIGN_STRENGTHS[raw];
+    return { raw, key:raw, label:`${raw}（${s.jp}）`, meaning:`テーマ：${s.theme}` };
+  }
+
+  const dt = parseDateLike(raw);
+  if (dt && dt.mo && dt.d){
+    const key = zodiacByMonthDay(dt.mo, dt.d);
+    if (key && SIGN_STRENGTHS[key]){
+      const s = SIGN_STRENGTHS[key];
+      return { raw, key, label:`${key}（${s.jp}）`, meaning:`テーマ：${s.theme}` };
+    }
+  }
+  return { raw, key:null, label:`入力：${raw}`, meaning:"※星座名（Gemini/双子座など）か、誕生日（1990/6/4など）で入力すると自動判定できます。" };
+}
+
+/* ======= 結果取得 ======= */
 function getResult(){
   const raw = localStorage.getItem("talentResult");
   if (!raw) return null;
@@ -151,55 +325,115 @@ function clampPercent(n){
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.round(n)));
 }
-function fitText(text, min, max){
-  let s = text;
-  if (s.length < min) s += "今の強みを“行動に落とす”ほど、あなたらしさが現実で増幅していきます。";
-  if (s.length > max) s = s.slice(0, max-1) + "…";
-  return s;
+
+/* ======= 上位3 才能フィードバック（具体化＋字数レンジ固定） ======= */
+function topTalentFeedback(t, fieldName, sunPack){
+  const name = t.name, pct = t.pct;
+  const sunHint = (sunPack?.key && SIGN_STRENGTHS[sunPack.key])
+    ? `太陽${SIGN_STRENGTHS[sunPack.key].jp}の流れだと「${SIGN_STRENGTHS[sunPack.key].best[0].name}」の使い方が追い風になります。`
+    : "";
+
+  const lib = {
+    "学習探究": `「学習探究」は、気になったテーマを深掘りして“使える知識”に変換する才能です。あなたは情報を集めるだけでなく、要点を抜き出して整理し、自分の言葉に直すことで理解が一段深まります。メインが${fieldName}なら、学びを行動や仕組みに落とすほど成果が早いはず。おすすめは「学ぶ→1枚にまとめる→小さく試す」の3点セット。注意点は、学びが増えるほど着手が遅れること。期限を切って“まず出す”を習慣にすると伸びます。${sunHint}`,
+    "アイディア": `「アイディア」は、点在する経験や知識をつなげて新しい企画・切り口を生む才能です。あなたは“別分野の共通点”を見つけるのが得意で、既存の正解をなぞるより独自の編集で価値を出せます。メインが${fieldName}なら、ひらめきを「型」に落とすほど強みが安定。おすすめは「メモ→3案に絞る→1つだけ実装」。注意点はアイデアが増えすぎて散らかること。今月のテーマを1つ決めると爆発力が上がります。${sunHint}`,
+    "仕組み": `「仕組み」は、再現性を作って“勝手に回る状態”へ整える才能です。あなたは属人的な作業を分解し、ルール化・テンプレ化・導線化して、無駄な消耗を減らせます。メインが${fieldName}なら、整えた仕組みがそのまま成果に直結しやすいはず。おすすめは「チェックリスト化→週1で改善→手放す」。注意点は完璧に作ってから出したくなること。まず仮で運用し、反応で育てると最速で洗練されます。${sunHint}`,
+    "本質": `「本質」は、情報のノイズを削ぎ落として核心にたどり着く才能です。あなたは“結局いちばん大事なポイント”を掴むのが上手で、迷いが多い場面ほど価値が出ます。メインが${fieldName}なら、見抜いた本質を行動指針に落とすほど強みが安定。おすすめは「結論→理由→具体例」で伝えること。注意点は正しさが強く出ると相手が置いていかれること。相手の理解速度に合わせると説得力が伸びます。${sunHint}`,
+    "整理整頓": `「整理整頓」は、混沌を分類して“使いやすい形”に整える才能です。情報・物・タスクを、行動しやすい状態へ変換できます。メインが${fieldName}なら、整えた瞬間に動きが速くなるはず。おすすめは「カテゴリ分け→優先順位→次の一手」まで決めること。注意点は整えること自体が目的になること。整理のゴールを“実行が早くなる”に置くと、あなたの価値が最大化します。${sunHint}`,
+    "ビジョン": `「ビジョン」は、価値観を軸に未来像を描き、方向性を言語化する才能です。あなたは理想を描くだけでなく、“なぜそれをやるのか”を自分の言葉で定義できるタイプ。メインが${fieldName}なら、ビジョンを予定表と行動に落とすほど加速します。おすすめは「3ヶ月の到達点→今週の一歩」へ分解。注意点は理想が大きいほど動けなくなること。最小の実装を決めると流れが戻ります。${sunHint}`,
+    "寄り添い": `「寄り添い」は、相手の感情の深いところを感じ取り、その人のペースで支える才能です。あなたの安心感は、相手の自己開示を引き出し、本音から前進を生みます。メインが${fieldName}なら、寄り添いを“次の一歩”に繋げるほど成果が安定。おすすめは「共感→整理→提案」の順。注意点は抱え込みすぎること。境界線を引くほど、あなたの優しさが長く機能します。${sunHint}`,
+    "調和": `「調和」は、人と人の摩擦を和らげ、安心・安全な空気をつくる才能です。あなたがいると場が整い、対立が“合意”へ変わりやすい。メインが${fieldName}なら、関係性を整えつつ前に進める力が強みになります。おすすめは「共通目的」を言葉にすること。注意点は本音を飲み込みすぎること。穏やかに“結論だけ”伝えると、調和と推進が両立します。${sunHint}`,
+    "育成": `「育成」は、小さな成長の芽を見つけ、信じて伴走し続ける才能です。あなたは変化の兆しに敏感で、相手が続けられる形を一緒に作れます。メインが${fieldName}なら、育成を“仕組み”と組み合わせるほど伸びます。おすすめは「できたことログ」を作ること。注意点は相手の課題を自分の責任にしすぎること。主役は相手、あなたは伴走者の立ち位置が最強です。${sunHint}`,
+    "バランス": `「バランス」は、全体を見ながら負担や役割の偏りを整える才能です。あなたは空気・人・進捗を同時に見て、“回る状態”へ戻す力があります。メインが${fieldName}なら、調整がそのまま成果の安定につながります。おすすめは「見える化→分担→期限」の3点。注意点は調整役を抱えすぎること。任せる範囲を増やすほど、あなたの影響力は強くなります。${sunHint}`,
+    "目標達成": `「目標達成」は、決めたゴールへ粘り強く進み、達成まで持っていく才能です。あなたは“やると決めたら進む”推進力があり、途中でぶれても戻ってこられます。メインが${fieldName}なら、成果を積み上げる強さが出やすい。おすすめは「今週の3タスク」に落とすこと。注意点は頑張りすぎ。休む日も予定に入れると、達成が長期で安定します。${sunHint}`,
+    "修復": `「修復」は、うまくいかない状態を立て直し、もう一度動く形に整える才能です。あなたは原因を分解し、何を直せば再始動できるかが見抜けます。メインが${fieldName}なら、修復が“仕組み化”に直結しやすい。おすすめは「原因→手当→再発防止」までセットで作ること。注意点は直しすぎて手放せないこと。直す対象と卒業する対象を分けると加速します。${sunHint}`,
+    "開放": `「開放」は、場の空気をふわっと明るくし、人の心をオープンにする才能です。あなたの一言や雰囲気が、緊張をほどき本音を出しやすくします。メインが${fieldName}なら、開放が“関係性の推進力”になります。おすすめは小さなユーモアと肯定の相槌。注意点は明るさで論点が流れること。要所だけ締めると、魅力と成果が両立します。${sunHint}`,
+    "表現": `「表現」は、内側を言葉や表情で届け、共感や納得を生む才能です。あなたは体験をストーリーに変え、相手が自分ごと化できる形で伝えられます。メインが${fieldName}なら、表現を“型”にするほど強みが安定。おすすめは「体験→気づき→次の一歩」でまとめること。注意点は出しすぎて疲れること。見せる範囲を選ぶほど、言葉の価値が上がります。${sunHint}`,
+    "求心": `「求心」は「この指とまれ」で人を自然と集め、仲間を増やす才能です。あなたはテーマを掲げると人が集まり、輪ができやすい。メインが${fieldName}なら、集めた後に“回る形”を作ると強いです。おすすめは「旗（テーマ）→参加の一歩→継続の仕組み」。注意点は運営が重くなること。仕組みと分担を前提にすると、求心が長く機能します。${sunHint}`,
+    "先導": `「先導」は半歩先に立って「こっちへ行こう」と道を示す才能です。あなたは迷いがある場面ほど、方向性を言語化して前に進められます。メインが${fieldName}なら、先導力が成果に直結しやすい。おすすめは「結論→理由→最初の一歩」を短く提示すること。注意点は速さが強く出ると置いていくこと。納得を拾うほど、自然なリーダーになります。${sunHint}`,
+  };
+
+  const raw = lib[name] || `「${name}」は${pct}%の才能です。あなたらしさが強く出る領域なので、日常の選択に積極的に使うほど伸びます。得意を“型”に落とすことで成果が安定し、周囲の評価も上がりやすいでしょう。`;
+  // 220〜280字に揃える
+  return fitToRange(raw, 220, 280);
 }
 
-function buildCombo800(top3, fieldName){
+/* ======= 3つ掛け合わせ（星座資質も混ぜる） ======= */
+function buildCombo800(top3, fieldName, sunPack){
   const [a,b,c] = top3;
   const base =
-`あなたの上位3才能は「${a.name}」「${b.name}」「${c.name}」。この組み合わせは、“得意を磨き（${a.name}）→価値に変換し（${b.name}）→現実で回る形にする（${c.name}）”という流れを持っています。メインフィールドが${fieldName}の場合、この流れが「思いつきで終わらず、現実に着地する」方向へ安定しやすいのが特徴です。
+`上位3才能は「${a.name}」「${b.name}」「${c.name}」。この組み合わせは、“見つける→組み立てる→回す”の流れを持っています。まず${a.name}で核となる価値や強みを掴み、${b.name}で形にするアイデアや構造を作り、${c.name}で再現性のある運用へ落とします。メインフィールドが${fieldName}の場合、この流れが現実に着地しやすく、積み上げが強みになります。
 
-まず、${a.name}はあなたの核。ここを満たすほど自信と集中が生まれます。次に${b.name}が、体験や知識をつなげて“独自の切り口”を作ります。最後に${c.name}が、仕組み・導線・型に落として再現できる状態へ整えます。
+活かし方のコツは、ひらめきや学びが出たら“最小の実装”を即決すること。投稿1本・チェックリスト1枚・ミニ企画1つのように小さく形にして反応を見て改良する。あなたの強みは「一度作ったら終わり」ではなく「運用しながら磨く」で伸びます。
 
-活かし方のコツは、ひらめきが出たら“最小の実装”を決めること。たとえば投稿1本、チェックリスト1枚、ミニ企画1つなど、小さく形にして反応を見て改良する。注意点は、準備と改善に熱中して実装が遅れること。週のどこかで“作る日”を固定すると、才能が自動で前進しはじめます。`;
-  return fitText(base, 760, 860);
+落とし穴は、準備や改善に熱中して“出す”が遅れること。週のどこかで「公開・提出・リリースの日」を固定し、完璧より回転数を優先すると、才能が一気に現実を動かします。最後に、あなたが一番気持ちよく伸びるのは“自分の美学”に沿っている時。違和感が出たら、核（${a.name}）に戻り、次の一手を小さく切り直すと流れが戻ります。`;
+
+  let extra = "";
+  if (sunPack?.key && SIGN_STRENGTHS[sunPack.key]){
+    const s = SIGN_STRENGTHS[sunPack.key];
+    const best = s.best.map(x=>x.name).join("・");
+    extra =
+`太陽星座は${s.jp}。この星座は資質で言うと「${best}」が濃いので、上位才能の使い方も“その資質のノリ”に合わせると伸びが速いです。`;
+  }
+
+  return fitToRange(base + "\n\n" + extra, 760, 860);
 }
 
-function buildStar800(top3, fieldName, stars){
-  const sun = (stars?.sun || "-").trim();
-  const sunKey = SIGN[sun] || "あなたらしさの核";
-  const base =
-`太陽星座×才能の視点では「どの才能をどう使うと気持ちよく伸びるか」が見えます。あなたの上位3才能は「${top3[0].name}」「${top3[1].name}」「${top3[2].name}」。メインフィールドは${fieldName}です。
+/* ======= 太陽×才能（星座資質→才能の橋渡し） ======= */
+function buildStar800(top3, fieldName, sunPack, ranked){
+  const sunKey = sunPack?.key;
+  const sign = sunKey && SIGN_STRENGTHS[sunKey] ? SIGN_STRENGTHS[sunKey] : null;
 
-太陽星座（${sun}）は“人生のエンジン”で、キーワードは「${sunKey}」。この方向で意思決定するほど、上位才能が自然に回りやすくなります。たとえば、迷ったときに「太陽のキーワードに沿う選択か？」を基準にすると、ブレが減って行動が加速します。
+  const topNames = top3.map(t=>t.name).join("・");
+  let strengthsLine = "未入力の場合は空欄でOK。入力すると星座の傾向を反映できます。";
+  let bridgeTalents = [];
+  if (sign){
+    const best = sign.best.map(x=>x.name);
+    strengthsLine = `太陽星座は${sign.jp}（${sign.theme}）。資質で言うと「${best.join("・")}」が強く出やすいタイプです。`;
+    // BEST資質→才能へ接続（重複排除）
+    const cand = [];
+    best.forEach(st=>{
+      (STRENGTH_TO_TALENTS[st] || []).forEach(t=>cand.push(t));
+    });
+    bridgeTalents = [...new Set(cand)];
+  }
 
-おすすめは、上位才能を“太陽のテーマ”に沿って使うこと。学び・発信・仕組み化・人との関わりを、太陽の方向へ寄せていくほど、努力が成果になりやすいです。もし最近しんどいなら、太陽のテーマから外れた選択が続いているサインかもしれません。小さくても「太陽らしい一歩」を入れると、流れが戻りやすくなります。`;
-  return fitText(base, 760, 860);
+  const pick = (arr, n)=> arr.slice(0, n);
+  const bridgeText = bridgeTalents.length
+    ? `星座の資質から見ると、あなたの才能では「${pick(bridgeTalents,3).join("・")}」が特に伸びやすい領域。上位3（${topNames}）と噛み合わせると、自然に成果へ繋がります。`
+    : `星座が未確定でも、上位3（${topNames}）はあなたの核。これを日常の選択に使うほど結果が出やすいです。`;
+
+  // “星座×上位3”の具体的な使い方を、上位3の役割に落とす
+  const [a,b,c] = top3;
+  const actionBlock =
+`具体的には、①${a.name}を「やらないこと」まで含めて定義し、あなたの基準をはっきりさせます。②${b.name}で、基準を満たす形（企画・導線・言語）を3案出し、1つだけ実装に落とします。③${c.name}で、実装したものを“回る形”に整えます（テンプレ化・チェックリスト化・導線化）。メインが${fieldName}なら、ここまでやると成果が安定しやすいです。`;
+
+  // 注意点：星座傾向に合わせて変える
+  let caution = "注意点は、準備や改善に熱中して実装が遅れること。期限を切り、まず出してから磨く方が伸びます。";
+  if (sunKey === "Aries") caution = "注意点は、勢いで走りすぎて整える前に疲れること。止まる日と整える日を予定に入れると最強です。";
+  if (sunKey === "Taurus" || sunKey === "Capricorn") caution = "注意点は、堅実さが強く出て新しい挑戦が遅れること。小さく試す枠を作ると伸びが加速します。";
+  if (sunKey === "Gemini") caution = "注意点は、面白い情報が増えすぎて散らかること。今月のテーマを1つに絞ると鋭さが出ます。";
+  if (sunKey === "Cancer" || sunKey === "Pisces") caution = "注意点は、周りを優先して自分の軸が薄くなること。上位才能の核に戻る時間を確保すると安定します。";
+  if (sunKey === "Virgo") caution = "注意点は、改善が止まらず公開が遅れること。仮で出して運用しながら直すと最速で洗練されます。";
+  if (sunKey === "Aquarius") caution = "注意点は、独自性が先行して伝わりにくくなること。結論→例→一歩の順で言語化すると届きます。";
+  if (sunKey === "Leo") caution = "注意点は、見せ方にエネルギーが偏って疲れること。目的（誰に何を届けるか）を先に固定すると強いです。";
+  if (sunKey === "Libra") caution = "注意点は、調整に回りすぎて決断が遅れること。決める軸を1つ持つと前に進みます。";
+  if (sunKey === "Scorpio") caution = "注意点は、深くやりすぎて時間が溶けること。期限を決めて“まず形にする”を入れると強いです。";
+  if (sunKey === "Sagittarius") caution = "注意点は、広げすぎて散漫になること。今期の旗を1つに絞ると爆発力が出ます。";
+
+  const txt =
+`太陽星座×才能で見ると、「どの才能を、どのテンションで使うと伸びるか」が見えてきます。
+${strengthsLine}
+あなたの上位3才能は「${topNames}」。${bridgeText}
+
+${actionBlock}
+
+最後に、この診断結果は“性格の固定”ではなく“伸び方の設計図”です。${caution}
+迷った時は「核（上位3）に戻る→最小の一歩を出す」。この循環が一番早くあなたの現実を動かします。`;
+
+  return fitToRange(txt, 760, 860);
 }
 
-const DETAIL_TEMPLATE = {
-  "学習探究": (t)=>`あなたの「学習探究」は${t.pct}%で、好奇心のスイッチが入ると深掘りが止まらないタイプ。学びを「要点→自分の言葉→小さな実験」に落とすほど、現実で成果が出やすいです。注意点は情報を集め続けて動けなくなること。学びのゴールを“行動”に置くと爆発的に伸びます。`,
-  "アイディア": (t)=>`「アイディア」${t.pct}%は、知識や経験の点と点をつなげて、新しい見方や企画を生み出す力。ひらめきを出しっぱなしにせず、「1つだけ形にする」を決めると一気に現実が進みます。おすすめはメモ→整理→発信or実装の流れ。`,
-  "仕組み": (t)=>`「仕組み」${t.pct}%は、再現性を作る才能。属人的なやり方をルール化して“勝手に回る状態”へ整えるのが得意です。最初から完璧に作らず、仮→運用→改善で育てると強みが活きます。仕組み化はあなたの自由時間を増やす味方です。`,
-  "本質": (t)=>`「本質」${t.pct}%は、情報のノイズを削ぎ落として核心にたどり着く力。「結局いちばん大事なポイント」を見抜けるので、意思決定の質が上がります。伝えるときは結論→理由→具体例の順が◎。周りが追いつける速度も意識すると説得力が増します。`,
-  "整理整頓": (t)=>`「整理整頓」${t.pct}%は、混沌を分類しスッキリ使える形に整える力。情報・物・タスクを“行動しやすい状態”に変換できます。注意点は整えること自体が目的になりやすい点。整理のゴールを「行動が早くなる」に置くと最強です。`,
-  "ビジョン": (t)=>`「ビジョン」${t.pct}%は、価値観を軸に未来像を描く才能。方向性が言語化されるほど迷いが減り、行動が加速します。理想が先行して不安が出たら、今週できる最小の一歩に落とすのがコツ。小さな成功体験がビジョンを現実にします。`,
-  "寄り添い": (t)=>`「寄り添い」${t.pct}%は、相手の感情の深いところを感じ取り、その人のペースで支える力。安心感を作れるのが強みです。注意点は抱え込みすぎ。共感＋次の一歩をセットにしつつ、境界線を引くと強みが安定して活きます。`,
-  "調和": (t)=>`「調和」${t.pct}%は、人と人の摩擦を和らげ安心な空気を作る才能。対立を避けるだけでなく、合意点を探して場を整えられます。自分の意見を後回しにしすぎないことがコツ。安心感に“本音の一言”が加わるとさらに強いです。`,
-  "育成": (t)=>`「育成」${t.pct}%は、小さな成長の芽を見つけ伴走する力。相手の変化に気づき、継続を支えられます。おすすめは“できたことログ”を一緒に作ること。注意点は相手の課題を自分の責任にしすぎること。主体性を尊重すると輝きます。`,
-  "バランス": (t)=>`「バランス」${t.pct}%は、全体最適で負担や役割を整える才能。偏りに気づき、回る形を作れます。調整役に徹しすぎると疲れやすいので、抱えなくていい仕事は手放してOK。あなたのバランス感覚はチームの安定装置です。`,
-  "目標達成": (t)=>`「目標達成」${t.pct}%は、決めたゴールまで粘り強く進む力。ブレても戻ってこられるのが強みです。ゴールを小分けにして達成感を増やすとさらに伸びます。注意点は頑張りすぎ。休息も計画に含めると持久力が安定します。`,
-  "修復": (t)=>`「修復」${t.pct}%は、崩れた状況を立て直し再始動させる力。原因を分解して、もう一度動く形に整えられます。注意点は直しすぎて手放せないこと。直す対象と卒業する対象を分けると、前進が加速します。`,
-  "開放": (t)=>`「開放」${t.pct}%は、場の空気をふわっと明るくし、人の心をオープンにする才能。緊張をほぐし、本音が出る空気を作れます。明るさで重要論点を流さないようメリハリをつけると、魅力がさらに増します。`,
-  "表現": (t)=>`「表現」${t.pct}%は、内側を言葉や表情で届ける才能。ストーリーや気づきの言語化で共感を呼べます。出す範囲を選ぶほど表現は洗練されます。“体験→気づき→学び”で発信すると、あなたの魅力が伝わりやすいです。`,
-  "求心": (t)=>`「求心」${t.pct}%は、人を自然と集め仲間を増やす才能。活かし方は“旗（テーマ）”をはっきり掲げること。集めた後は運営が重くなりやすいので、仕組み化と組み合わせると強力です。`,
-  "先導": (t)=>`「先導」${t.pct}%は、半歩先に立って「こっちへ行こう」と道を示す力。迷いがある場で方向性を出せます。強引に見えないためには“なぜそこへ行くか”を短く明確に。納得を拾うほどリーダーシップが自然になります。`,
-};
-
+/* ======= DOM ======= */
 const els = {
   fieldImg: document.getElementById("fieldImg"),
   fieldPill: document.getElementById("fieldPill"),
@@ -210,10 +444,10 @@ const els = {
   rankBody: document.querySelector("#rankTable tbody"),
   top3Boxes: document.getElementById("top3Boxes"),
   combo800: document.getElementById("combo800"),
-  comboCount: document.getElementById("comboCount"),
-  star800: document.getElementById("star800"),
-  starCount: document.getElementById("starCount"),
   sun: document.getElementById("sun"),
+  sunResolved: document.getElementById("sunResolved"),
+  sunMeaning: document.getElementById("sunMeaning"),
+  star800: document.getElementById("star800"),
   shareHint: document.getElementById("shareHint"),
 };
 
@@ -258,55 +492,59 @@ function render(){
     els.rankBody.appendChild(tr);
   });
 
-  // 上位3（200〜300字）
+  // 太陽入力：indexから持ってきた raw（誕生日でもOK）
+  const storedRaw = r.horoscope?.sun || "";
+  els.sun.value = storedRaw;
+
+  // 太陽星座を確定表示（ここが「出てない」問題の対策）
+  const sunPack = resolveSun(els.sun.value);
+  if (sunPack.label){
+    els.sunResolved.style.display = "inline-block";
+    els.sunResolved.textContent = `太陽星座（推定）：${sunPack.label}`;
+    els.sunMeaning.textContent = sunPack.meaning || "";
+  }
+
+  // 上位3（220〜280字）
   const top3 = ranked.slice(0,3);
   els.top3Boxes.innerHTML = "";
   top3.forEach(t=>{
-    const gen = DETAIL_TEMPLATE[t.name] || ((x)=>`「${x.name}」は${x.pct}%の才能です。あなたらしさが強く出る領域なので、日常の行動・選択・発信に積極的に使うほど伸びます。得意を“型”に落とすことで成果が安定し、周囲の評価も上がりやすいでしょう。`);
-    const text = fitText(gen(t), 200, 300);
+    const text = topTalentFeedback(t, info.name, sunPack);
     const box = document.createElement("div");
     box.className = "col box";
-    box.innerHTML = `<h3>${t.name}（${t.pct}%）</h3><p style="white-space:pre-wrap;margin:0;">${text}</p><p class="small">文字数：${text.length}</p>`;
+    box.innerHTML = `<h3>${t.name}（${t.pct}%）</h3><p style="white-space:pre-wrap;margin:0;">${text}</p>`;
     els.top3Boxes.appendChild(box);
   });
 
-  const combo = buildCombo800(top3, info.name);
-  els.combo800.textContent = combo;
-  els.comboCount.textContent = `文字数：${combo.length}`;
+  // 掛け合わせ
+  els.combo800.textContent = buildCombo800(top3, info.name, sunPack);
 
-  // 太陽のみ
-  els.sun.value = r.horoscope?.sun || "";
-  const starText = buildStar800(top3, info.name, { sun: els.sun.value.trim() });
-  els.star800.textContent = starText;
-  els.starCount.textContent = `文字数：${starText.length}`;
+  // 太陽×才能
+  els.star800.textContent = buildStar800(top3, info.name, sunPack, ranked);
 
-  window.__PACK__ = { r, info, ranked, top3, combo, starText };
+  // 共有用パック
+  window.__PACK__ = { r, info, ranked, top3, sunPack };
 }
 
+/* ======= シェア ======= */
 function buildShareText(){
   const p = window.__PACK__;
   if (!p) return "結果がありません。";
+  const s = p.sunPack?.label ? `太陽星座：${p.sunPack.label}` : "";
   const lines = [];
   lines.push("【能力の輪｜才能診断 結果】");
   lines.push(`メインフィールド：${p.info.name}`);
+  if (s) lines.push(s);
   lines.push("");
   lines.push("▼４フィールド");
   lines.push(`EARTH ${p.r.fields.EARTH||0}% / FIRE ${p.r.fields.FIRE||0}% / AIR ${p.r.fields.AIR||0}% / WATER ${p.r.fields.WATER||0}%`);
   lines.push("");
-  lines.push("▼才能ランキング（16）");
-  p.ranked.forEach((t,i)=> lines.push(`${i+1}. ${t.name} ${t.pct}%`));
+  lines.push("▼上位3才能");
+  p.top3.forEach((t,i)=> lines.push(`${i+1}. ${t.name} ${t.pct}%`));
   lines.push("");
-  lines.push("▼上位3掛け合わせ");
-  lines.push(p.combo);
-  lines.push("");
-  lines.push("▼太陽星座×才能");
-  lines.push(p.starText);
-  lines.push("");
-  lines.push(`URL：${location.href}`);
+  lines.push("URL：" + location.href);
   lines.push("#能力の輪プロジェクト #才能診断");
   return lines.join("\n");
 }
-
 async function share(){
   const text = buildShareText();
   els.shareHint.textContent = "";
@@ -325,21 +563,40 @@ async function copy(){
   els.shareHint.textContent = "コピーしました。";
 }
 
-document.getElementById("btnBackToQuiz").addEventListener("click", ()=>{ location.href="./"; });
-document.getElementById("btnReset").addEventListener("click", ()=>{ localStorage.removeItem("talentResult"); location.reload(); });
-
+/* ======= 再生成（太陽入力を保存→文章更新） ======= */
 document.getElementById("btnRegenStar").addEventListener("click", ()=>{
   const p = window.__PACK__;
   if (!p) return;
+
+  // 入力を保存（誕生日でもOK）
   p.r.horoscope = { sun: els.sun.value.trim() };
   localStorage.setItem("talentResult", JSON.stringify(p.r));
-  const t = buildStar800(p.top3, p.info.name, p.r.horoscope);
-  p.starText = t;
-  els.star800.textContent = t;
-  els.starCount.textContent = `文字数：${t.length}`;
-  els.shareHint.textContent = "太陽星座入力を保存しました。";
+
+  // 再評価
+  const sunPack = resolveSun(els.sun.value);
+  p.sunPack = sunPack;
+
+  els.sunResolved.style.display = "inline-block";
+  els.sunResolved.textContent = `太陽星座（推定）：${sunPack.label}`;
+  els.sunMeaning.textContent = sunPack.meaning || "";
+
+  // 文章更新
+  els.combo800.textContent = buildCombo800(p.top3, p.info.name, sunPack);
+  els.star800.textContent = buildStar800(p.top3, p.info.name, sunPack, p.ranked);
+
+  // 上位3も星座ヒントが入るので更新
+  const boxes = document.querySelectorAll("#top3Boxes .col.box");
+  boxes.forEach((box, i)=>{
+    const t = p.top3[i];
+    const newText = topTalentFeedback(t, p.info.name, sunPack);
+    box.querySelector("p").textContent = newText;
+  });
+
+  els.shareHint.textContent = "太陽星座入力を保存して再生成しました。";
 });
 
+document.getElementById("btnBackToQuiz").addEventListener("click", ()=>{ location.href="./"; });
+document.getElementById("btnReset").addEventListener("click", ()=>{ localStorage.removeItem("talentResult"); location.reload(); });
 document.getElementById("btnShare").addEventListener("click", share);
 document.getElementById("btnCopy").addEventListener("click", copy);
 
