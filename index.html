@@ -50,12 +50,9 @@
       </div>
 
       <div>
-        <p class="pill">画像は同階層でOK</p>
-        <p class="small">element_earth.png / element_fire.png / element_air.png / element_water.png</p>
         <button class="btn" id="btnStart">診断スタート</button>
         <button class="btn sub" id="btnResetAll" style="margin-left:8px;">リセット</button>
         <p class="small warn" id="debugMsg" style="margin-top:10px;"></p>
-        <p class="small">更新が反映されない時は URL 末尾に <b>?v=1</b> を付けて開いてね。</p>
       </div>
     </div>
   </div>
@@ -82,7 +79,6 @@
 </div>
 
 <script>
-/* ========= 16才能（確定名称＆説明） ========= */
 const TALENT_DEFS = [
   { name:"学習探究", desc:"興味を持ったテーマをとことん深く学び、知識として蓄えていく才能。" },
   { name:"アイディア", desc:"いろんな知識や経験をつなぎ合わせて、新しいアイデアを生み出す才能。" },
@@ -102,11 +98,8 @@ const TALENT_DEFS = [
   { name:"先導", desc:"人より半歩先に立って、「こっちへ行こう」と道を示す才能。" },
 ];
 const TALENT_KEYS = TALENT_DEFS.map(x=>x.name);
-
 const FIELD_KEYS = ["EARTH","FIRE","AIR","WATER"];
 const AXIS_KEYS  = ["X1","X2","I1","I2","T1","T2","R1","R2"];
-
-/* ========= 8軸の所属 ========= */
 const AXIS_META = {
   X1:{ field:"EARTH", label:"EARTH｜X1：構築・段取り軸" },
   X2:{ field:"EARTH", label:"EARTH｜X2：遂行・やり切り軸" },
@@ -118,9 +111,7 @@ const AXIS_META = {
   R2:{ field:"WATER", label:"WATER｜R2：協働・チーム軸" },
 };
 
-/* ========= 48問（提供テキストそのまま） ========= */
 const QUESTIONS = [
-  // X1
   { axis:"X1", text:"やることを紙やアプリにリスト化してから行動することが多い。" },
   { axis:"X1", text:"物事を進める前に、手順や流れを整理したくなる。" },
   { axis:"X1", text:"「この順番でやると効率がいい」と考えながら動いている。" },
@@ -128,7 +119,6 @@ const QUESTIONS = [
   { axis:"X1", text:"みんなが迷わないように、ルールや仕組みを整えたくなる。" },
   { axis:"X1", text:"ゴールから逆算してスケジュールを組むのが得意だと感じる。" },
 
-  // X2
   { axis:"X2", text:"途中で投げ出すのが嫌で、つい最後までやり切ってしまう。" },
   { axis:"X2", text:"締め切りが近づくと、むしろ集中力が高まるほうだ。" },
   { axis:"X2", text:"「途中までやって放置」が気持ち悪く感じる。" },
@@ -136,7 +126,6 @@ const QUESTIONS = [
   { axis:"X2", text:"人から頼まれたことを忘れないよう、きちんと終わらせようとする。" },
   { axis:"X2", text:"長期的なプロジェクトでも、コツコツ続けることができる。" },
 
-  // I1
   { axis:"I1", text:"人前で話すことに、そこまで強い抵抗はない。" },
   { axis:"I1", text:"自分の考えや経験を、SNSやブログなどで発信したくなる。" },
   { axis:"I1", text:"場が静かすぎると、つい話題を振ったり盛り上げたりしてしまう。" },
@@ -144,7 +133,6 @@ const QUESTIONS = [
   { axis:"I1", text:"初対面の人とも、わりとすぐに会話を広げられる。" },
   { axis:"I1", text:"「あなたがいると場の雰囲気が明るくなる」と言われたことがある。" },
 
-  // I2
   { axis:"I2", text:"みんなの意見を聞いたうえで、「じゃあこうしよう」と方向性を示すことが多い。" },
   { axis:"I2", text:"企画やアイデアを、人に分かりやすくプレゼンするのが好きだ。" },
   { axis:"I2", text:"相手に納得してもらえる説明の仕方を考えるのが得意だ。" },
@@ -152,7 +140,6 @@ const QUESTIONS = [
   { axis:"I2", text:"自分がいいと思ったものは、人にも勧めたくなる。" },
   { axis:"I2", text:"会議や話し合いで、最終的に結論をまとめる役割になることが多い。" },
 
-  // T1
   { axis:"T1", text:"情報を聞いたとき「なぜそうなるのか？」を考えたくなる。" },
   { axis:"T1", text:"問題が起きると、原因を分析して再発防止策を考える。" },
   { axis:"T1", text:"データや数字を見て判断するのが好きだ。" },
@@ -160,7 +147,6 @@ const QUESTIONS = [
   { axis:"T1", text:"複雑な話を構造化して、図や箇条書きでまとめるのが得意だ。" },
   { axis:"T1", text:"先のリスクや抜け漏れに、比較的早く気づく方だ。" },
 
-  // T2
   { axis:"T2", text:"興味を持ったテーマは、ネットや本で徹底的に調べたくなる。" },
   { axis:"T2", text:"学びのための講座や本に、お金や時間を使うことに抵抗が少ない。" },
   { axis:"T2", text:"「なぜ？」「どういう仕組み？」と深く掘り下げて考えるのが好きだ。" },
@@ -168,7 +154,6 @@ const QUESTIONS = [
   { axis:"T2", text:"新しい知識や考え方に触れるとワクワクする。" },
   { axis:"T2", text:"学んだことを自分なりに整理して、メモやノートにまとめることが多い。" },
 
-  // R1
   { axis:"R1", text:"人の表情や声のトーンから、気持ちの変化に敏感だと思う。" },
   { axis:"R1", text:"悩んでいる人の話を聞くと、つい親身になってしまう。" },
   { axis:"R1", text:"相手が傷つかないような言い方を選びがちだ。" },
@@ -176,7 +161,6 @@ const QUESTIONS = [
   { axis:"R1", text:"相手の立場に立って考える癖がある。" },
   { axis:"R1", text:"誰かが疎外されている雰囲気に気づくと、放っておけない。" },
 
-  // R2
   { axis:"R2", text:"一人でやるより、誰かと一緒に進める方がやる気が出る。" },
   { axis:"R2", text:"チームのメンバーそれぞれの強みや個性を意識して見ている。" },
   { axis:"R2", text:"役割分担やスケジュールを調整することが多い。" },
@@ -185,7 +169,6 @@ const QUESTIONS = [
   { axis:"R2", text:"会議や作業の前後に、メンバーに声をかけてフォローすることが多い。" },
 ].map((q,i)=>({ id:i+1, ...q }));
 
-/* ========= 8軸→16才能 変換ウェイト（調整可） ========= */
 const W = (obj)=>obj;
 const TALENT_WEIGHTS = {
   "学習探究": W({ T2:1.0 }),
@@ -206,7 +189,6 @@ const TALENT_WEIGHTS = {
   "先導": W({ I2:0.7, I1:0.2, X2:0.1 }),
 };
 
-/* ========= UI ========= */
 const screenStart = document.getElementById("screenStart");
 const screenQuiz  = document.getElementById("screenQuiz");
 const progress    = document.getElementById("progress");
@@ -221,21 +203,12 @@ document.getElementById("btnResetAll").addEventListener("click", ()=>{
 });
 document.getElementById("btnAbort").addEventListener("click", ()=> location.reload());
 
-try{
-  if (QUESTIONS.length !== 48) {
-    debugMsg.textContent = `⚠️ QUESTIONSが${QUESTIONS.length}問です（48問必要）`;
-  } else {
-    debugMsg.textContent = "";
-  }
-}catch(e){
-  debugMsg.textContent = "⚠️ 初期化エラー：" + e.message;
-}
+if (QUESTIONS.length !== 48) debugMsg.textContent = `⚠️ QUESTIONSが${QUESTIONS.length}問です（48問必要）`;
 
-/* ========= 状態 ========= */
 let idx = 0;
 let answers = [];
-let axisScore  = Object.fromEntries(AXIS_KEYS.map(k=>[k,0]));    // 0〜18（6問×最大3）
-let fieldScore = Object.fromEntries(FIELD_KEYS.map(k=>[k,0]));   // 合計
+let axisScore  = { X1:0, X2:0, I1:0, I2:0, T1:0, T2:0, R1:0, R2:0 };
+let fieldScore = { EARTH:0, FIRE:0, AIR:0, WATER:0 };
 const maxAxis = 6 * 3;
 
 const SCALE = [
@@ -246,10 +219,9 @@ const SCALE = [
 ];
 
 document.getElementById("btnStart").addEventListener("click", ()=>{
-  idx = 0;
-  answers = [];
-  axisScore  = Object.fromEntries(AXIS_KEYS.map(k=>[k,0]));
-  fieldScore = Object.fromEntries(FIELD_KEYS.map(k=>[k,0]));
+  idx = 0; answers = [];
+  axisScore  = { X1:0, X2:0, I1:0, I2:0, T1:0, T2:0, R1:0, R2:0 };
+  fieldScore = { EARTH:0, FIRE:0, AIR:0, WATER:0 };
   screenStart.style.display = "none";
   screenQuiz.style.display  = "block";
   renderQ();
@@ -259,101 +231,71 @@ document.getElementById("btnBack").addEventListener("click", ()=>{
   if (answers.length === 0) return;
   const last = answers.pop();
   axisScore[last.axis] -= last.value;
-  const f = AXIS_META[last.axis].field;
-  fieldScore[f] -= last.value;
+  fieldScore[AXIS_META[last.axis].field] -= last.value;
   idx = Math.max(0, idx-1);
   renderQ();
 });
+
+function clampPct(n){
+  n = Number(n);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
 
 function renderQ(){
   const q = QUESTIONS[idx];
   progress.textContent = `Q${idx+1} / ${QUESTIONS.length}`;
   axisTag.textContent = AXIS_META[q.axis].label;
   qText.textContent = q.text;
-
   optionsEl.innerHTML = "";
   SCALE.forEach(opt=>{
     const btn = document.createElement("button");
     btn.className = "opt";
     btn.textContent = opt.label;
-
     btn.addEventListener("click", ()=>{
       const v = opt.value;
       answers.push({ qId:q.id, axis:q.axis, value:v });
-
       axisScore[q.axis] += v;
-      const f = AXIS_META[q.axis].field;
-      fieldScore[f] += v;
-
+      fieldScore[AXIS_META[q.axis].field] += v;
       idx++;
       if (idx >= QUESTIONS.length) finish();
       else renderQ();
     });
-
     optionsEl.appendChild(btn);
   });
 }
 
-function pct(n){
-  n = Number(n);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, Math.round(n)));
-}
-
 function finish(){
-  // 8軸を0-1に正規化
   const axisNorm = {};
-  AXIS_KEYS.forEach(k=>{
-    axisNorm[k] = (axisScore[k] || 0) / maxAxis; // 0..1
-  });
+  AXIS_KEYS.forEach(k=> axisNorm[k] = (axisScore[k]||0) / maxAxis);
 
-  // 16才能 raw
   const talentRaw = {};
   TALENT_KEYS.forEach(t=>{
     const w = TALENT_WEIGHTS[t] || {};
     let s = 0;
-    Object.entries(w).forEach(([axis, weight])=>{
-      s += (axisNorm[axis] || 0) * weight;
-    });
+    for (const [axis, weight] of Object.entries(w)) s += (axisNorm[axis]||0) * weight;
     talentRaw[t] = s;
   });
 
-  // talents pct（最大を100に）
   const maxT = Math.max(...Object.values(talentRaw), 1e-9);
   const talents = TALENT_DEFS.map(def=>{
     const raw = talentRaw[def.name] || 0;
-    const p = pct((raw / maxT) * 100);
-    return { name:def.name, pct:p, desc:def.desc, raw };
-  }).sort((a,b)=> b.pct - a.pct);
+    const pct = clampPct((raw / maxT) * 100);
+    return { name:def.name, pct, desc:def.desc, raw };
+  }).sort((a,b)=>b.pct-a.pct);
 
-  // 4フィールド％（合計100）
   const totalF = Object.values(fieldScore).reduce((a,b)=>a+b,0) || 1;
-  const fieldsPct = {};
-  FIELD_KEYS.forEach(k=>{
-    fieldsPct[k] = pct((fieldScore[k] / totalF) * 100);
-  });
+  const fields = {};
+  FIELD_KEYS.forEach(k=> fields[k] = clampPct((fieldScore[k] / totalF) * 100));
 
-  // main field
   const mainField = Object.entries(fieldScore).sort((a,b)=>b[1]-a[1])[0]?.[0] || "EARTH";
+  const horoscope = { sun: document.getElementById("sun").value.trim() };
 
-  // horoscope（太陽だけ）
-  const horoscope = {
-    sun: document.getElementById("sun").value.trim(),
-  };
-
-  // 保存
-  const result = {
-    mainField,
-    fields: fieldsPct,
-    talents,
-    axisScore,
-    fieldScore,
-    axisNorm,
-    horoscope,
+  localStorage.setItem("talentResult", JSON.stringify({
+    mainField, fields, talents, axisScore, fieldScore, axisNorm, horoscope,
     answeredAt: new Date().toISOString()
-  };
+  }));
 
-  localStorage.setItem("talentResult", JSON.stringify(result));
   location.href = "./result.html";
 }
 </script>
