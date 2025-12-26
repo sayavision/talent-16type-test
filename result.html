@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>才能×ホロスコープ 16タイプ診断（結果）</title>
+  <title>能力の輪｜診断結果</title>
   <style>
     :root{
       --bg:#0b1020; --card:#111a33; --txt:#e9ecf4; --muted:#a9b2cc;
@@ -18,7 +18,7 @@
     .col{ flex:1; min-width:280px; }
     h1{ font-size:20px; margin:0 0 8px; }
     h2{ font-size:18px; margin:0 0 10px; }
-    h3{ font-size:15px; margin:14px 0 8px; color:var(--txt); }
+    h3{ font-size:15px; margin:14px 0 8px; }
     p{ margin:8px 0; color:var(--muted); line-height:1.7; }
     .pill{ display:inline-block; padding:6px 10px; border-radius:999px;
       border:1px solid rgba(255,255,255,.14); color:var(--muted); font-size:12px; }
@@ -28,14 +28,12 @@
       width:190px; max-width:42vw; height:auto; border-radius:16px;
       border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03);
     }
-    .kvs div{ margin:6px 0; color:var(--muted); }
     .bars{ display:grid; gap:10px; margin-top:10px; }
     .barRow{ display:grid; grid-template-columns: 120px 1fr 64px; gap:10px; align-items:center; }
     .barLabel{ color:var(--muted); font-size:13px; }
     .barTrack{ height:12px; border-radius:999px; background: rgba(255,255,255,.08); overflow:hidden; border:1px solid rgba(255,255,255,.10); }
     .barFill{ height:100%; width:0%; background: var(--accent); }
     .barVal{ color:var(--muted); font-size:13px; text-align:right; }
-    .list{ margin:8px 0 0; padding-left: 18px; color: var(--muted); }
     .rankTable{ width:100%; border-collapse:collapse; margin-top:10px; }
     .rankTable th,.rankTable td{ border-bottom:1px solid rgba(255,255,255,.10); padding:10px 6px; vertical-align:top; }
     .rankTable th{ color:var(--muted); font-weight:600; font-size:12px; text-align:left; }
@@ -44,7 +42,7 @@
     .box{ border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px; background: rgba(255,255,255,.03); }
     .btn{ background: var(--accent); color:#07102a; border:0; padding:10px 14px; border-radius: 12px; font-weight: 800; cursor:pointer; }
     .btn.sub{ background: transparent; color: var(--txt); border: 1px solid rgba(255,255,255,.14); }
-    textarea, input{
+    input{
       width:100%; box-sizing:border-box;
       padding:10px 12px; border-radius:12px;
       border:1px solid rgba(255,255,255,.14);
@@ -60,11 +58,12 @@
 <body>
 <div class="wrap">
   <div class="card">
-    <h1>才能×ホロスコープ 16タイプ診断（結果ページ）</h1>
-    <p class="small">
-      これは「結果表示専用」の完成版テンプレです。<br>
-      質問ページから localStorage に保存した結果（talentResult）を読み込みます。
-    </p>
+    <h1>能力の輪｜診断結果</h1>
+    <p class="small">※質問ページで回答すると、このページに結果が表示されます。</p>
+    <div class="row">
+      <button class="btn sub" id="btnBackToQuiz">質問ページに戻る</button>
+      <button class="btn sub" id="btnReset">結果リセット</button>
+    </div>
   </div>
 
   <div style="height:14px"></div>
@@ -77,12 +76,8 @@
         <div class="pill" id="fieldPill">MAIN FIELD</div>
         <h1 id="fieldTitle" style="margin-top:10px;">-</h1>
         <p id="fieldShort" style="margin-top:8px;">-</p>
-        <div class="kvs">
-          <div id="fieldMeta1">-</div>
-          <div id="fieldMeta2">-</div>
-        </div>
-        <p class="small warn" id="imgWarn" style="display:none;">
-          画像が読み込めません。ファイル名・パスが合っているか確認してね。
+        <p class="small warn" id="noDataWarn" style="display:none;">
+          まだ結果データがありません。先に質問ページで回答してね。
         </p>
       </div>
     </div>
@@ -109,7 +104,7 @@
 
     <div class="hr"></div>
 
-    <h2>上位３つの才能</h2>
+    <h2>上位３つの才能（各200〜300字）</h2>
     <div class="row" id="top3Boxes"></div>
 
     <div class="hr"></div>
@@ -132,8 +127,8 @@
         <input id="moon" placeholder="Leo / Cancer / etc">
         <label>ASC（例：Libra）</label>
         <input id="asc" placeholder="Libra / Virgo / etc">
-        <p class="small">※本計算は後で。まずは「星名×上位才能」で文章を作る実装。</p>
-        <button class="btn sub" id="btnRegenStar">星×才能を再生成</button>
+        <button class="btn sub" id="btnRegenStar" style="margin-top:10px;">星×才能を再生成</button>
+        <p class="small">※入力はこの端末のlocalStorageに保存されます。</p>
       </div>
       <div class="col box">
         <p id="star800" style="white-space:pre-wrap; margin:0;"></p>
@@ -152,72 +147,37 @@
 </div>
 
 <script>
-/* =========================
-   画像マッピング（index.htmlと同階層）
-   ========================= */
 const FIELD_IMAGE = {
   EARTH: "./element_earth.png",
   FIRE:  "./element_fire.png",
   AIR:   "./element_air.png",
   WATER: "./element_water.png",
 };
-
-/* フィールド説明 */
 const FIELD_INFO = {
-  EARTH: { name:"EARTH｜形にするフィールド", short:"思いついた未来を、コツコツ現実の形にしていくタイプ。段取りや準備を重ねながら、一歩ずつ前に進む力があります。" },
-  FIRE:  { name:"FIRE｜動かすフィールド",   short:"熱量と決断で流れをつくり、停滞を動かすタイプ。やると決めたら一気に加速でき、周囲を巻き込みながら突破口を開きます。" },
-  AIR:   { name:"AIR｜ひらめくフィールド", short:"情報や体験を軽やかに組み替え、発想で未来を開くタイプ。視点を変えたり言語化したりして、新しい可能性を見つけるのが得意です。" },
-  WATER: { name:"WATER｜つなぐフィールド", short:"人の感情や空気を感じ取り、関係性を整えるタイプ。安心感のある場をつくり、信頼で物事を前に進める力があります。" },
+  EARTH: { name:"EARTH｜形にするフィールド", short:"段取り・仕組み・継続で、未来を現実に着地させるタイプ。日々の積み上げで強くなる。" },
+  FIRE:  { name:"FIRE｜動かすフィールド",   short:"熱量・発信・推進で、流れを生み出すタイプ。場を前に進める力がある。" },
+  AIR:   { name:"AIR｜ひらめくフィールド", short:"分析・学習・言語化で、可能性を広げるタイプ。理解を深めて価値に変える。" },
+  WATER: { name:"WATER｜つなぐフィールド", short:"共感・調和・協働で、人と場を整えるタイプ。安心感が推進力になる。" },
 };
 
-/* 16才能（固定：質問ページから渡してもOK） */
-const DEFAULT_TALENTS = [
-  { name:"学習探究", pct:92, desc:"興味を持ったテーマをとことん深く学び、知識として蓄えていく才能。" },
-  { name:"アイディア", pct:88, desc:"いろんな知識や経験をつなぎ合わせて、新しいアイデアを生み出す才能。" },
-  { name:"仕組み", pct:80, desc:"物事を仕組み化・ルール化して、“勝手に回る状態”をつくる才能。" },
-  { name:"本質", pct:76, desc:"表面的な情報にとらわれず、「結局いちばん大事なポイント」を見抜く才能。" },
-  { name:"整理整頓", pct:70, desc:"ごちゃついた状態を分類・整理し、スッキリ使いやすい形に整え直す才能。" },
-  { name:"ビジョン", pct:68, desc:"自分なりの価値観をもとに、進みたい方向や未来のイメージを描く才能。" },
-  { name:"寄り添い", pct:65, desc:"相手の感情の深いところを感じ取り、その人のペースで支える才能。" },
-  { name:"調和", pct:63, desc:"人と人の摩擦を和らげ、安心・安全な空気をつくる才能。" },
-  { name:"育成", pct:60, desc:"小さな成長の芽を見つけ、信じて伴走し続ける才能。" },
-  { name:"バランス", pct:58, desc:"チーム全体を見ながら、負担や役割のバランスを整える才能。" },
-  { name:"目標達成", pct:55, desc:"決めたゴールに向かって粘り強く進み、達成まで持っていく才能。" },
-  { name:"修復", pct:52, desc:"うまくいかなくなった物事を立て直し、もう一度動き出すように整える才能。" },
-  { name:"開放", pct:48, desc:"場の空気をふわっと明るくし、人の心をオープンにしていく才能。" },
-  { name:"表現", pct:45, desc:"言葉や表情・表現を通して、自分の内側を外に届ける才能。" },
-  { name:"求心", pct:42, desc:"「この指とまれ」で人を自然と集め、仲間を増やしていく才能。" },
-  { name:"先導", pct:38, desc:"人より半歩先に立って、「こっちへ行こう」と道を示す才能。" },
-];
-
-/* ✅質問ページから保存された結果を読む */
 function getResult(){
   const raw = localStorage.getItem("talentResult");
-  if (!raw){
-    // 保存がない時でもページが壊れないように保険
-    return {
-      mainField:"EARTH",
-      fields:{ EARTH:42, FIRE:18, AIR:28, WATER:12 },
-      talents: DEFAULT_TALENTS,
-      horoscope:{ sun:"", moon:"", asc:"" }
-    };
-  }
-  const parsed = JSON.parse(raw);
-  // talentsが入ってない場合の保険
-  if (!parsed.talents) parsed.talents = DEFAULT_TALENTS;
-  if (!parsed.horoscope) parsed.horoscope = { sun:"", moon:"", asc:"" };
-  return parsed;
+  if (!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
 }
 
-/* ここから下は描画処理（短くまとめ） */
+function clampPercent(n){
+  n = Number(n);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
 const els = {
   fieldImg: document.getElementById("fieldImg"),
-  imgWarn: document.getElementById("imgWarn"),
   fieldPill: document.getElementById("fieldPill"),
   fieldTitle: document.getElementById("fieldTitle"),
   fieldShort: document.getElementById("fieldShort"),
-  fieldMeta1: document.getElementById("fieldMeta1"),
-  fieldMeta2: document.getElementById("fieldMeta2"),
+  noDataWarn: document.getElementById("noDataWarn"),
   fieldBars: document.getElementById("fieldBars"),
   rankBody: document.querySelector("#rankTable tbody"),
   top3Boxes: document.getElementById("top3Boxes"),
@@ -231,27 +191,87 @@ const els = {
   shareHint: document.getElementById("shareHint"),
 };
 
-function clamp(n){ n=Number(n); if(!Number.isFinite(n)) return 0; return Math.max(0, Math.min(100, Math.round(n))); }
+const DETAIL_TEMPLATE = {
+  "学習探究": (t)=>`あなたの「学習探究」は${t.pct}%で、好奇心のスイッチが入ると深掘りが止まらないタイプ。学びを「要点→自分の言葉→小さな実験」に落とすほど、現実で成果が出やすいです。注意点は情報を集め続けて動けなくなること。学びのゴールを“行動”に置くと爆発的に伸びます。`,
+  "アイディア": (t)=>`「アイディア」${t.pct}%は、知識や経験の点と点をつなげて、新しい見方や企画を生み出す力。ひらめきを出しっぱなしにせず、「1つだけ形にする」を決めると一気に現実が進みます。おすすめはメモ→整理→発信or実装の流れ。`,
+  "仕組み": (t)=>`「仕組み」${t.pct}%は、再現性を作る才能。属人的なやり方をルール化して“勝手に回る状態”へ整えるのが得意です。最初から完璧に作らず、仮→運用→改善で育てると強みが活きます。仕組み化はあなたの自由時間を増やす味方です。`,
+  "本質": (t)=>`「本質」${t.pct}%は、情報のノイズを削ぎ落として核心にたどり着く力。「結局いちばん大事なポイント」を見抜けるので、意思決定の質が上がります。伝えるときは結論→理由→具体例の順が◎。周りが追いつける速度も意識すると説得力が増します。`,
+  "整理整頓": (t)=>`「整理整頓」${t.pct}%は、混沌を分類しスッキリ使える形に整える力。情報・物・タスクを“行動しやすい状態”に変換できます。注意点は整えること自体が目的になりやすい点。整理のゴールを「行動が早くなる」に置くと最強です。`,
+  "ビジョン": (t)=>`「ビジョン」${t.pct}%は、価値観を軸に未来像を描く才能。方向性が言語化されるほど迷いが減り、行動が加速します。理想が先行して不安が出たら、今週できる最小の一歩に落とすのがコツ。小さな成功体験がビジョンを現実にします。`,
+  "寄り添い": (t)=>`「寄り添い」${t.pct}%は、相手の感情の深いところを感じ取り、その人のペースで支える力。安心感を作れるのが強みです。注意点は抱え込みすぎ。共感＋次の一歩をセットにしつつ、境界線を引くと強みが安定して活きます。`,
+  "調和": (t)=>`「調和」${t.pct}%は、人と人の摩擦を和らげ安心な空気を作る才能。対立を避けるだけでなく、合意点を探して場を整えられます。自分の意見を後回しにしすぎないことがコツ。安心感に“本音の一言”が加わるとさらに強いです。`,
+  "育成": (t)=>`「育成」${t.pct}%は、小さな成長の芽を見つけ伴走する力。相手の変化に気づき、継続を支えられます。おすすめは“できたことログ”を一緒に作ること。注意点は相手の課題を自分の責任にしすぎること。主体性を尊重すると輝きます。`,
+  "バランス": (t)=>`「バランス」${t.pct}%は、全体最適で負担や役割を整える才能。偏りに気づき、回る形を作れます。調整役に徹しすぎると疲れやすいので、抱えなくていい仕事は手放してOK。あなたのバランス感覚はチームの安定装置です。`,
+  "目標達成": (t)=>`「目標達成」${t.pct}%は、決めたゴールまで粘り強く進む力。ブレても戻ってこられるのが強みです。ゴールを小分けにして達成感を増やすとさらに伸びます。注意点は頑張りすぎ。休息も計画に含めると持久力が安定します。`,
+  "修復": (t)=>`「修復」${t.pct}%は、崩れた状況を立て直し再始動させる力。原因を分解して、もう一度動く形に整えられます。注意点は直しすぎて手放せないこと。直す対象と卒業する対象を分けると、前進が加速します。`,
+  "開放": (t)=>`「開放」${t.pct}%は、場の空気をふわっと明るくし、人の心をオープンにする才能。緊張をほぐし、本音が出る空気を作れます。明るさで重要論点を流さないようメリハリをつけると、魅力がさらに増します。`,
+  "表現": (t)=>`「表現」${t.pct}%は、内側を言葉や表情で届ける才能。ストーリーや気づきの言語化で共感を呼べます。出す範囲を選ぶほど表現は洗練されます。“体験→気づき→学び”で発信すると、あなたの魅力が伝わりやすいです。`,
+  "求心": (t)=>`「求心」${t.pct}%は、人を自然と集め仲間を増やす才能。活かし方は“旗（テーマ）”をはっきり掲げること。集めた後は運営が重くなりやすいので、仕組み化と組み合わせると強力です。`,
+  "先導": (t)=>`「先導」${t.pct}%は、半歩先に立って「こっちへ行こう」と道を示す力。迷いがある場で方向性を出せます。強引に見えないためには“なぜそこへ行くか”を短く明確に。納得を拾うほどリーダーシップが自然になります。`,
+};
+
+function fitText(text, min, max){
+  let s = text;
+  if (s.length < min) s += "今の強みを“行動に落とす”ほど、あなたらしさが現実で増幅していきます。";
+  if (s.length > max) s = s.slice(0, max-1) + "…";
+  return s;
+}
+
+function buildCombo800(top3, fieldName){
+  const [a,b,c] = top3;
+  const base =
+`あなたの上位3才能は「${a.name}」「${b.name}」「${c.name}」。この組み合わせは、“得意を磨き（${a.name}）→価値に変換し（${b.name}）→現実で回る形にする（${c.name}）”という流れを持っています。メインフィールドが${fieldName}の場合、この流れが「思いつきで終わらず、現実に着地する」方向へ安定しやすいのが特徴です。
+
+まず、${a.name}はあなたの核。ここを満たすほど自信と集中が生まれます。次に${b.name}が、体験や知識をつなげて“独自の切り口”を作ります。最後に${c.name}が、仕組み・導線・型に落として再現できる状態へ整えます。
+
+活かし方のコツは、ひらめきが出たら“最小の実装”を決めること。たとえば投稿1本、チェックリスト1枚、ミニ企画1つなど、小さく形にして反応を見て改良する。注意点は、準備と改善に熱中して実装が遅れること。週のどこかで“作る日”を固定すると、才能が自動で前進しはじめます。`;
+  return fitText(base, 760, 860);
+}
+
+const SIGN = {
+  Aries:"行動と突破", Taurus:"継続と実感", Gemini:"好奇心と言語", Cancer:"共感と保護",
+  Leo:"表現と誇り", Virgo:"整えると改善", Libra:"調和と美意識", Scorpio:"深掘りと変容",
+  Sagittarius:"拡大と探究", Capricorn:"構築と成果", Aquarius:"革新と俯瞰", Pisces:"直感と受容"
+};
+
+function buildStar800(top3, fieldName, stars){
+  const sun = stars.sun || "-";
+  const moon = stars.moon || "-";
+  const asc = stars.asc || "-";
+  const sunKey = SIGN[sun] || "個性の核";
+  const moonKey = SIGN[moon] || "感情のクセ";
+  const ascKey = SIGN[asc] || "外からの見え方";
+
+  const base =
+`星×才能の視点では「どの才能をどう使うと気持ちよく伸びるか」が見えます。あなたの上位3才能は「${top3[0].name}」「${top3[1].name}」「${top3[2].name}」。メインフィールドは${fieldName}です。
+
+太陽（${sun}）は人生のエンジンで、キーワードは「${sunKey}」。この方向で動くほど、上位才能が“自然に回る”感覚が増えます。月（${moon}）は安心の条件で、キーワードは「${moonKey}」。ここが満たされると、心が軽くなり、行動や発信の出力が安定します。ASC（${asc}）は外からの入口で、キーワードは「${ascKey}」。第一印象としては、あなたの上位才能の使い方が“信頼・魅力”として伝わりやすいでしょう。
+
+おすすめは、①太陽のテーマで意思決定する→②月が安心する環境を整える→③ASCの強みで形にして出す、の順番。星の流れに合わせるほど無理が減り、努力が成果になりやすくなります。もし最近しんどいなら、月（${moon}）が安心できる“場・人・習慣”を先に整えると回復が早いです。`;
+  return fitText(base, 760, 860);
+}
 
 function render(){
   const r = getResult();
+  if (!r){
+    els.noDataWarn.style.display = "block";
+    return;
+  }
+  els.noDataWarn.style.display = "none";
+
   const info = FIELD_INFO[r.mainField] || { name:r.mainField, short:"-" };
-
-  const src = FIELD_IMAGE[r.mainField] || "";
-  els.fieldImg.src = src;
-  els.fieldImg.onerror = ()=> els.imgWarn.style.display = "block";
-  els.fieldImg.onload  = ()=> els.imgWarn.style.display = "none";
-
   els.fieldPill.textContent = `MAIN FIELD：${r.mainField}`;
   els.fieldTitle.textContent = info.name;
   els.fieldShort.textContent = info.short;
-  els.fieldMeta1.textContent = `画像パス：${src}`;
-  els.fieldMeta2.textContent = `URL：${location.href}`;
 
-  // bars
+  const imgSrc = FIELD_IMAGE[r.mainField] || "";
+  els.fieldImg.src = imgSrc;
+  els.fieldImg.alt = r.mainField;
+
+  // 4フィールドバー
   els.fieldBars.innerHTML = "";
   ["EARTH","FIRE","AIR","WATER"].forEach(k=>{
-    const val = clamp(r.fields?.[k] ?? 0);
+    const val = clampPercent(r.fields?.[k] ?? 0);
     const row = document.createElement("div");
     row.className = "barRow";
     row.innerHTML = `
@@ -262,70 +282,114 @@ function render(){
     els.fieldBars.appendChild(row);
   });
 
-  // ranking
-  const ranked = [...(r.talents||[])].sort((a,b)=> (b.pct||0)-(a.pct||0));
+  // 才能ランキング
+  const ranked = [...(r.talents||[])].sort((a,b)=> (b.pct||0) - (a.pct||0));
   els.rankBody.innerHTML = "";
   ranked.forEach((t,i)=>{
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="rankNum">${i+1}</td><td><b>${t.name}</b></td><td>${t.desc||""}</td><td class="rankPct">${t.pct}%</td>`;
+    tr.innerHTML = `
+      <td class="rankNum">${i+1}</td>
+      <td><b>${t.name}</b></td>
+      <td>${t.desc||""}</td>
+      <td class="rankPct">${t.pct}%</td>
+    `;
     els.rankBody.appendChild(tr);
   });
 
-  // top3簡易表示（文章生成は後で強化）
+  // 上位3（200〜300字）
   const top3 = ranked.slice(0,3);
   els.top3Boxes.innerHTML = "";
   top3.forEach(t=>{
+    const gen = DETAIL_TEMPLATE[t.name] || ((x)=>`「${x.name}」は${x.pct}%の才能です。あなたらしさが強く出る領域なので、日常の行動・選択・発信に積極的に使うほど伸びます。得意を“型”に落とすことで成果が安定し、周囲の評価も上がりやすいでしょう。`);
+    const text = fitText(gen(t), 200, 300);
     const box = document.createElement("div");
     box.className = "col box";
-    box.innerHTML = `<h3>${t.name}（${t.pct}%）</h3><p style="margin:0;">${t.desc||""}</p>`;
+    box.innerHTML = `<h3>${t.name}（${t.pct}%）</h3><p style="white-space:pre-wrap;margin:0;">${text}</p><p class="small">文字数：${text.length}</p>`;
     els.top3Boxes.appendChild(box);
   });
 
-  // 800字欄は仮
-  els.combo800.textContent = "（ここに上位3掛け合わせ800字を表示：質問ページの結果と連動して出せます）";
-  els.comboCount.textContent = "";
-  els.star800.textContent = "（ここに星×才能800字を表示：太陽/月/ASC入力で更新）";
-  els.starCount.textContent = "";
+  // 掛け合わせ800
+  const combo = buildCombo800(top3, info.name);
+  els.combo800.textContent = combo;
+  els.comboCount.textContent = `文字数：${combo.length}`;
 
-  window.__PACK__ = { r, info, ranked, top3 };
+  // 星×才能800
+  els.sun.value  = r.horoscope?.sun  || "";
+  els.moon.value = r.horoscope?.moon || "";
+  els.asc.value  = r.horoscope?.asc  || "";
+  const starText = buildStar800(top3, info.name, { sun:els.sun.value.trim(), moon:els.moon.value.trim(), asc:els.asc.value.trim() });
+  els.star800.textContent = starText;
+  els.starCount.textContent = `文字数：${starText.length}`;
+
+  // シェア用保存
+  window.__PACK__ = { r, info, ranked, top3, combo, starText };
 }
-render();
-
-document.getElementById("btnRegenStar").addEventListener("click", ()=>{
-  const p = window.__PACK__;
-  p.r.horoscope = { sun: els.sun.value.trim(), moon: els.moon.value.trim(), asc: els.asc.value.trim() };
-  localStorage.setItem("talentResult", JSON.stringify(p.r));
-  els.shareHint.textContent = "ホロス入力を保存しました。";
-});
 
 function buildShareText(){
   const p = window.__PACK__;
+  if (!p) return "結果がありません。";
   const lines = [];
-  lines.push("【才能×ホロスコープ 16タイプ診断｜結果】");
+  lines.push("【能力の輪｜才能診断 結果】");
   lines.push(`メインフィールド：${p.info.name}`);
+  lines.push("");
+  lines.push("▼４フィールド");
+  lines.push(`EARTH ${p.r.fields.EARTH||0}% / FIRE ${p.r.fields.FIRE||0}% / AIR ${p.r.fields.AIR||0}% / WATER ${p.r.fields.WATER||0}%`);
   lines.push("");
   lines.push("▼才能ランキング（16）");
   p.ranked.forEach((t,i)=> lines.push(`${i+1}. ${t.name} ${t.pct}%`));
+  lines.push("");
+  lines.push("▼上位3掛け合わせ");
+  lines.push(p.combo);
+  lines.push("");
+  lines.push("▼星×才能");
+  lines.push(p.starText);
   lines.push("");
   lines.push(`URL：${location.href}`);
   lines.push("#能力の輪プロジェクト #才能診断");
   return lines.join("\n");
 }
+
 async function share(){
   const text = buildShareText();
   els.shareHint.textContent = "";
   if (navigator.share){
-    try{ await navigator.share({ title:"診断結果", text, url: location.href }); els.shareHint.textContent="共有しました！"; return; }catch(e){}
+    try{
+      await navigator.share({ title:"能力の輪｜診断結果", text, url: location.href });
+      els.shareHint.textContent = "共有しました！";
+      return;
+    }catch(e){}
   }
   await navigator.clipboard.writeText(text);
-  els.shareHint.textContent="コピーしました。SNSに貼り付けてね。";
+  els.shareHint.textContent = "コピーしました。SNS/LINEに貼り付けてシェアできます。";
 }
 async function copy(){
   await navigator.clipboard.writeText(buildShareText());
-  els.shareHint.textContent="コピーしました。";
+  els.shareHint.textContent = "コピーしました。";
 }
+
 document.getElementById("btnShare").addEventListener("click", share);
 document.getElementById("btnCopy").addEventListener("click", copy);
+
+document.getElementById("btnBackToQuiz").addEventListener("click", ()=>{
+  location.href = "./";
+});
+document.getElementById("btnReset").addEventListener("click", ()=>{
+  localStorage.removeItem("talentResult");
+  location.reload();
+});
+document.getElementById("btnRegenStar").addEventListener("click", ()=>{
+  const p = window.__PACK__;
+  if (!p) return;
+  p.r.horoscope = { sun:els.sun.value.trim(), moon:els.moon.value.trim(), asc:els.asc.value.trim() };
+  localStorage.setItem("talentResult", JSON.stringify(p.r));
+  const t = buildStar800(p.top3, p.info.name, p.r.horoscope);
+  p.starText = t;
+  els.star800.textContent = t;
+  els.starCount.textContent = `文字数：${t.length}`;
+  els.shareHint.textContent = "ホロスコープ入力を保存しました。";
+});
+
+render();
 </script>
 </body>
 </html>
