@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>能力の輪｜診断結果</title>
   <style>
-    :root{
-      --bg:#0b1020; --card:#111a33; --txt:#e9ecf4; --muted:#a9b2cc;
-      --line:rgba(255,255,255,.10); --accent:#7aa2ff;
-    }
+    :root{ --bg:#0b1020; --card:#111a33; --txt:#e9ecf4; --muted:#a9b2cc; --line:rgba(255,255,255,.10); --accent:#7aa2ff; }
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
       background: linear-gradient(180deg,#0b1020,#070a12); color:var(--txt); }
     .wrap{ max-width:980px; margin:0 auto; padding:24px; }
@@ -20,14 +17,10 @@
     h2{ font-size:18px; margin:0 0 10px; }
     h3{ font-size:15px; margin:14px 0 8px; }
     p{ margin:8px 0; color:var(--muted); line-height:1.7; }
-    .pill{ display:inline-block; padding:6px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.14); color:var(--muted); font-size:12px; }
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); font-size:12px; }
     .hr{ height:1px; background:var(--line); margin:14px 0; }
     .resultTop{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
-    .resultTop img{
-      width:190px; max-width:42vw; height:auto; border-radius:16px;
-      border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03);
-    }
+    .resultTop img{ width:190px; max-width:42vw; height:auto; border-radius:16px; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
     .bars{ display:grid; gap:10px; margin-top:10px; }
     .barRow{ display:grid; grid-template-columns: 120px 1fr 64px; gap:10px; align-items:center; }
     .barLabel{ color:var(--muted); font-size:13px; }
@@ -42,13 +35,7 @@
     .box{ border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:12px; background: rgba(255,255,255,.03); }
     .btn{ background: var(--accent); color:#07102a; border:0; padding:10px 14px; border-radius: 12px; font-weight: 800; cursor:pointer; }
     .btn.sub{ background: transparent; color: var(--txt); border: 1px solid rgba(255,255,255,.14); }
-    input{
-      width:100%; box-sizing:border-box;
-      padding:10px 12px; border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.04);
-      color: var(--txt);
-    }
+    input{ width:100%; box-sizing:border-box; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); color: var(--txt); }
     label{ display:block; margin:10px 0 6px; color:var(--muted); font-size:12px; }
     .small{ font-size:12px; color:var(--muted); }
     .warn{ color:#ffcf7a; }
@@ -76,9 +63,7 @@
         <div class="pill" id="fieldPill">MAIN FIELD</div>
         <h1 id="fieldTitle" style="margin-top:10px;">-</h1>
         <p id="fieldShort" style="margin-top:8px;">-</p>
-        <p class="small warn" id="noDataWarn" style="display:none;">
-          まだ結果データがありません。先に質問ページで回答してね。
-        </p>
+        <p class="small warn" id="noDataWarn" style="display:none;">まだ結果データがありません。先に質問ページで回答してね。</p>
       </div>
     </div>
 
@@ -143,17 +128,17 @@
 </div>
 
 <script>
-const FIELD_IMAGE = {
-  EARTH: "./element_earth.png",
-  FIRE:  "./element_fire.png",
-  AIR:   "./element_air.png",
-  WATER: "./element_water.png",
-};
+const FIELD_IMAGE = { EARTH:"./element_earth.png", FIRE:"./element_fire.png", AIR:"./element_air.png", WATER:"./element_water.png" };
 const FIELD_INFO = {
-  EARTH: { name:"EARTH｜形にするフィールド", short:"段取り・仕組み・継続で、未来を現実に着地させるタイプ。日々の積み上げで強くなる。" },
-  FIRE:  { name:"FIRE｜動かすフィールド",   short:"熱量・発信・推進で、流れを生み出すタイプ。場を前に進める力がある。" },
-  AIR:   { name:"AIR｜ひらめくフィールド", short:"分析・学習・言語化で、可能性を広げるタイプ。理解を深めて価値に変える。" },
-  WATER: { name:"WATER｜つなぐフィールド", short:"共感・調和・協働で、人と場を整えるタイプ。安心感が推進力になる。" },
+  EARTH:{ name:"EARTH｜形にするフィールド", short:"段取り・仕組み・継続で、未来を現実に着地させるタイプ。日々の積み上げで強くなる。" },
+  FIRE:{  name:"FIRE｜動かすフィールド",   short:"熱量・発信・推進で、流れを生み出すタイプ。場を前に進める力がある。" },
+  AIR:{   name:"AIR｜ひらめくフィールド", short:"分析・学習・言語化で、可能性を広げるタイプ。理解を深めて価値に変える。" },
+  WATER:{ name:"WATER｜つなぐフィールド", short:"共感・調和・協働で、人と場を整えるタイプ。安心感が推進力になる。" },
+};
+const SIGN = {
+  Aries:"行動と突破", Taurus:"継続と実感", Gemini:"好奇心と言語", Cancer:"共感と保護",
+  Leo:"表現と誇り", Virgo:"整えると改善", Libra:"調和と美意識", Scorpio:"深掘りと変容",
+  Sagittarius:"拡大と探究", Capricorn:"構築と成果", Aquarius:"革新と俯瞰", Pisces:"直感と受容"
 };
 
 function getResult(){
@@ -166,23 +151,35 @@ function clampPercent(n){
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(100, Math.round(n)));
 }
+function fitText(text, min, max){
+  let s = text;
+  if (s.length < min) s += "今の強みを“行動に落とす”ほど、あなたらしさが現実で増幅していきます。";
+  if (s.length > max) s = s.slice(0, max-1) + "…";
+  return s;
+}
 
-const els = {
-  fieldImg: document.getElementById("fieldImg"),
-  fieldPill: document.getElementById("fieldPill"),
-  fieldTitle: document.getElementById("fieldTitle"),
-  fieldShort: document.getElementById("fieldShort"),
-  noDataWarn: document.getElementById("noDataWarn"),
-  fieldBars: document.getElementById("fieldBars"),
-  rankBody: document.querySelector("#rankTable tbody"),
-  top3Boxes: document.getElementById("top3Boxes"),
-  combo800: document.getElementById("combo800"),
-  comboCount: document.getElementById("comboCount"),
-  star800: document.getElementById("star800"),
-  starCount: document.getElementById("starCount"),
-  sun: document.getElementById("sun"),
-  shareHint: document.getElementById("shareHint"),
-};
+function buildCombo800(top3, fieldName){
+  const [a,b,c] = top3;
+  const base =
+`あなたの上位3才能は「${a.name}」「${b.name}」「${c.name}」。この組み合わせは、“得意を磨き（${a.name}）→価値に変換し（${b.name}）→現実で回る形にする（${c.name}）”という流れを持っています。メインフィールドが${fieldName}の場合、この流れが「思いつきで終わらず、現実に着地する」方向へ安定しやすいのが特徴です。
+
+まず、${a.name}はあなたの核。ここを満たすほど自信と集中が生まれます。次に${b.name}が、体験や知識をつなげて“独自の切り口”を作ります。最後に${c.name}が、仕組み・導線・型に落として再現できる状態へ整えます。
+
+活かし方のコツは、ひらめきが出たら“最小の実装”を決めること。たとえば投稿1本、チェックリスト1枚、ミニ企画1つなど、小さく形にして反応を見て改良する。注意点は、準備と改善に熱中して実装が遅れること。週のどこかで“作る日”を固定すると、才能が自動で前進しはじめます。`;
+  return fitText(base, 760, 860);
+}
+
+function buildStar800(top3, fieldName, stars){
+  const sun = (stars?.sun || "-").trim();
+  const sunKey = SIGN[sun] || "あなたらしさの核";
+  const base =
+`太陽星座×才能の視点では「どの才能をどう使うと気持ちよく伸びるか」が見えます。あなたの上位3才能は「${top3[0].name}」「${top3[1].name}」「${top3[2].name}」。メインフィールドは${fieldName}です。
+
+太陽星座（${sun}）は“人生のエンジン”で、キーワードは「${sunKey}」。この方向で意思決定するほど、上位才能が自然に回りやすくなります。たとえば、迷ったときに「太陽のキーワードに沿う選択か？」を基準にすると、ブレが減って行動が加速します。
+
+おすすめは、上位才能を“太陽のテーマ”に沿って使うこと。学び・発信・仕組み化・人との関わりを、太陽の方向へ寄せていくほど、努力が成果になりやすいです。もし最近しんどいなら、太陽のテーマから外れた選択が続いているサインかもしれません。小さくても「太陽らしい一歩」を入れると、流れが戻りやすくなります。`;
+  return fitText(base, 760, 860);
+}
 
 const DETAIL_TEMPLATE = {
   "学習探究": (t)=>`あなたの「学習探究」は${t.pct}%で、好奇心のスイッチが入ると深掘りが止まらないタイプ。学びを「要点→自分の言葉→小さな実験」に落とすほど、現実で成果が出やすいです。注意点は情報を集め続けて動けなくなること。学びのゴールを“行動”に置くと爆発的に伸びます。`,
@@ -203,57 +200,34 @@ const DETAIL_TEMPLATE = {
   "先導": (t)=>`「先導」${t.pct}%は、半歩先に立って「こっちへ行こう」と道を示す力。迷いがある場で方向性を出せます。強引に見えないためには“なぜそこへ行くか”を短く明確に。納得を拾うほどリーダーシップが自然になります。`,
 };
 
-function fitText(text, min, max){
-  let s = text;
-  if (s.length < min) s += "今の強みを“行動に落とす”ほど、あなたらしさが現実で増幅していきます。";
-  if (s.length > max) s = s.slice(0, max-1) + "…";
-  return s;
-}
-
-function buildCombo800(top3, fieldName){
-  const [a,b,c] = top3;
-  const base =
-`あなたの上位3才能は「${a.name}」「${b.name}」「${c.name}」。この組み合わせは、“得意を磨き（${a.name}）→価値に変換し（${b.name}）→現実で回る形にする（${c.name}）”という流れを持っています。メインフィールドが${fieldName}の場合、この流れが「思いつきで終わらず、現実に着地する」方向へ安定しやすいのが特徴です。
-
-まず、${a.name}はあなたの核。ここを満たすほど自信と集中が生まれます。次に${b.name}が、体験や知識をつなげて“独自の切り口”を作ります。最後に${c.name}が、仕組み・導線・型に落として再現できる状態へ整えます。
-
-活かし方のコツは、ひらめきが出たら“最小の実装”を決めること。たとえば投稿1本、チェックリスト1枚、ミニ企画1つなど、小さく形にして反応を見て改良する。注意点は、準備と改善に熱中して実装が遅れること。週のどこかで“作る日”を固定すると、才能が自動で前進しはじめます。`;
-  return fitText(base, 760, 860);
-}
-
-const SIGN = {
-  Aries:"行動と突破", Taurus:"継続と実感", Gemini:"好奇心と言語", Cancer:"共感と保護",
-  Leo:"表現と誇り", Virgo:"整えると改善", Libra:"調和と美意識", Scorpio:"深掘りと変容",
-  Sagittarius:"拡大と探究", Capricorn:"構築と成果", Aquarius:"革新と俯瞰", Pisces:"直感と受容"
+const els = {
+  fieldImg: document.getElementById("fieldImg"),
+  fieldPill: document.getElementById("fieldPill"),
+  fieldTitle: document.getElementById("fieldTitle"),
+  fieldShort: document.getElementById("fieldShort"),
+  noDataWarn: document.getElementById("noDataWarn"),
+  fieldBars: document.getElementById("fieldBars"),
+  rankBody: document.querySelector("#rankTable tbody"),
+  top3Boxes: document.getElementById("top3Boxes"),
+  combo800: document.getElementById("combo800"),
+  comboCount: document.getElementById("comboCount"),
+  star800: document.getElementById("star800"),
+  starCount: document.getElementById("starCount"),
+  sun: document.getElementById("sun"),
+  shareHint: document.getElementById("shareHint"),
 };
-
-function buildStar800(top3, fieldName, stars){
-  const sun = (stars?.sun || "-").trim();
-  const sunKey = SIGN[sun] || "あなたらしさの核";
-  const base =
-`太陽星座×才能の視点では「どの才能をどう使うと気持ちよく伸びるか」が見えます。あなたの上位3才能は「${top3[0].name}」「${top3[1].name}」「${top3[2].name}」。メインフィールドは${fieldName}です。
-
-太陽星座（${sun}）は“人生のエンジン”で、キーワードは「${sunKey}」。この方向で意思決定するほど、上位才能が自然に回りやすくなります。たとえば、迷ったときに「太陽のキーワードに沿う選択か？」を基準にすると、ブレが減って行動が加速します。
-
-おすすめは、上位才能を“太陽のテーマ”に沿って使うこと。学び・発信・仕組み化・人との関わりを、太陽の方向へ寄せていくほど、努力が成果になりやすいです。もし最近しんどいなら、太陽のテーマから外れた選択が続いているサインかもしれません。小さくても「太陽らしい一歩」を入れると、流れが戻りやすくなります。`;
-  return fitText(base, 760, 860);
-}
 
 function render(){
   const r = getResult();
-  if (!r){
-    els.noDataWarn.style.display = "block";
-    return;
-  }
-  els.noDataWarn.style.display = "none";
+  if (!r){ els.noDataWarn.style.display="block"; return; }
+  els.noDataWarn.style.display="none";
 
   const info = FIELD_INFO[r.mainField] || { name:r.mainField, short:"-" };
   els.fieldPill.textContent = `MAIN FIELD：${r.mainField}`;
   els.fieldTitle.textContent = info.name;
   els.fieldShort.textContent = info.short;
 
-  const imgSrc = FIELD_IMAGE[r.mainField] || "";
-  els.fieldImg.src = imgSrc;
+  els.fieldImg.src = FIELD_IMAGE[r.mainField] || "";
   els.fieldImg.alt = r.mainField;
 
   // 4フィールドバー
@@ -296,18 +270,16 @@ function render(){
     els.top3Boxes.appendChild(box);
   });
 
-  // 掛け合わせ800
   const combo = buildCombo800(top3, info.name);
   els.combo800.textContent = combo;
   els.comboCount.textContent = `文字数：${combo.length}`;
 
-  // 太陽×才能800（太陽だけ）
+  // 太陽のみ
   els.sun.value = r.horoscope?.sun || "";
   const starText = buildStar800(top3, info.name, { sun: els.sun.value.trim() });
   els.star800.textContent = starText;
   els.starCount.textContent = `文字数：${starText.length}`;
 
-  // シェア用保存
   window.__PACK__ = { r, info, ranked, top3, combo, starText };
 }
 
@@ -353,16 +325,8 @@ async function copy(){
   els.shareHint.textContent = "コピーしました。";
 }
 
-document.getElementById("btnShare").addEventListener("click", share);
-document.getElementById("btnCopy").addEventListener("click", copy);
-
-document.getElementById("btnBackToQuiz").addEventListener("click", ()=>{
-  location.href = "./";
-});
-document.getElementById("btnReset").addEventListener("click", ()=>{
-  localStorage.removeItem("talentResult");
-  location.reload();
-});
+document.getElementById("btnBackToQuiz").addEventListener("click", ()=>{ location.href="./"; });
+document.getElementById("btnReset").addEventListener("click", ()=>{ localStorage.removeItem("talentResult"); location.reload(); });
 
 document.getElementById("btnRegenStar").addEventListener("click", ()=>{
   const p = window.__PACK__;
@@ -375,6 +339,9 @@ document.getElementById("btnRegenStar").addEventListener("click", ()=>{
   els.starCount.textContent = `文字数：${t.length}`;
   els.shareHint.textContent = "太陽星座入力を保存しました。";
 });
+
+document.getElementById("btnShare").addEventListener("click", share);
+document.getElementById("btnCopy").addEventListener("click", copy);
 
 render();
 </script>
