@@ -117,18 +117,14 @@
 
     <div class="hr"></div>
 
-    <h2>星×才能フィードバック（約800字）</h2>
+    <h2>太陽星座×才能フィードバック（約800字）</h2>
     <div class="row">
       <div class="col box">
-        <h3>ホロスコープ入力（簡易）</h3>
+        <h3>太陽星座（任意）</h3>
         <label>太陽星座（例：Gemini）</label>
         <input id="sun" placeholder="Gemini / Aries / etc">
-        <label>月星座（例：Leo）</label>
-        <input id="moon" placeholder="Leo / Cancer / etc">
-        <label>ASC（例：Libra）</label>
-        <input id="asc" placeholder="Libra / Virgo / etc">
-        <button class="btn sub" id="btnRegenStar" style="margin-top:10px;">星×才能を再生成</button>
-        <p class="small">※入力はこの端末のlocalStorageに保存されます。</p>
+        <button class="btn sub" id="btnRegenStar" style="margin-top:10px;">太陽×才能を再生成</button>
+        <p class="small">※太陽星座だけでOK。入力はこの端末のlocalStorageに保存されます。</p>
       </div>
       <div class="col box">
         <p id="star800" style="white-space:pre-wrap; margin:0;"></p>
@@ -165,7 +161,6 @@ function getResult(){
   if (!raw) return null;
   try{ return JSON.parse(raw); }catch(e){ return null; }
 }
-
 function clampPercent(n){
   n = Number(n);
   if (!Number.isFinite(n)) return 0;
@@ -186,8 +181,6 @@ const els = {
   star800: document.getElementById("star800"),
   starCount: document.getElementById("starCount"),
   sun: document.getElementById("sun"),
-  moon: document.getElementById("moon"),
-  asc: document.getElementById("asc"),
   shareHint: document.getElementById("shareHint"),
 };
 
@@ -235,19 +228,14 @@ const SIGN = {
 };
 
 function buildStar800(top3, fieldName, stars){
-  const sun = stars.sun || "-";
-  const moon = stars.moon || "-";
-  const asc = stars.asc || "-";
-  const sunKey = SIGN[sun] || "個性の核";
-  const moonKey = SIGN[moon] || "感情のクセ";
-  const ascKey = SIGN[asc] || "外からの見え方";
-
+  const sun = (stars?.sun || "-").trim();
+  const sunKey = SIGN[sun] || "あなたらしさの核";
   const base =
-`星×才能の視点では「どの才能をどう使うと気持ちよく伸びるか」が見えます。あなたの上位3才能は「${top3[0].name}」「${top3[1].name}」「${top3[2].name}」。メインフィールドは${fieldName}です。
+`太陽星座×才能の視点では「どの才能をどう使うと気持ちよく伸びるか」が見えます。あなたの上位3才能は「${top3[0].name}」「${top3[1].name}」「${top3[2].name}」。メインフィールドは${fieldName}です。
 
-太陽（${sun}）は人生のエンジンで、キーワードは「${sunKey}」。この方向で動くほど、上位才能が“自然に回る”感覚が増えます。月（${moon}）は安心の条件で、キーワードは「${moonKey}」。ここが満たされると、心が軽くなり、行動や発信の出力が安定します。ASC（${asc}）は外からの入口で、キーワードは「${ascKey}」。第一印象としては、あなたの上位才能の使い方が“信頼・魅力”として伝わりやすいでしょう。
+太陽星座（${sun}）は“人生のエンジン”で、キーワードは「${sunKey}」。この方向で意思決定するほど、上位才能が自然に回りやすくなります。たとえば、迷ったときに「太陽のキーワードに沿う選択か？」を基準にすると、ブレが減って行動が加速します。
 
-おすすめは、①太陽のテーマで意思決定する→②月が安心する環境を整える→③ASCの強みで形にして出す、の順番。星の流れに合わせるほど無理が減り、努力が成果になりやすくなります。もし最近しんどいなら、月（${moon}）が安心できる“場・人・習慣”を先に整えると回復が早いです。`;
+おすすめは、上位才能を“太陽のテーマ”に沿って使うこと。学び・発信・仕組み化・人との関わりを、太陽の方向へ寄せていくほど、努力が成果になりやすいです。もし最近しんどいなら、太陽のテーマから外れた選択が続いているサインかもしれません。小さくても「太陽らしい一歩」を入れると、流れが戻りやすくなります。`;
   return fitText(base, 760, 860);
 }
 
@@ -313,11 +301,9 @@ function render(){
   els.combo800.textContent = combo;
   els.comboCount.textContent = `文字数：${combo.length}`;
 
-  // 星×才能800
-  els.sun.value  = r.horoscope?.sun  || "";
-  els.moon.value = r.horoscope?.moon || "";
-  els.asc.value  = r.horoscope?.asc  || "";
-  const starText = buildStar800(top3, info.name, { sun:els.sun.value.trim(), moon:els.moon.value.trim(), asc:els.asc.value.trim() });
+  // 太陽×才能800（太陽だけ）
+  els.sun.value = r.horoscope?.sun || "";
+  const starText = buildStar800(top3, info.name, { sun: els.sun.value.trim() });
   els.star800.textContent = starText;
   els.starCount.textContent = `文字数：${starText.length}`;
 
@@ -341,7 +327,7 @@ function buildShareText(){
   lines.push("▼上位3掛け合わせ");
   lines.push(p.combo);
   lines.push("");
-  lines.push("▼星×才能");
+  lines.push("▼太陽星座×才能");
   lines.push(p.starText);
   lines.push("");
   lines.push(`URL：${location.href}`);
@@ -377,16 +363,17 @@ document.getElementById("btnReset").addEventListener("click", ()=>{
   localStorage.removeItem("talentResult");
   location.reload();
 });
+
 document.getElementById("btnRegenStar").addEventListener("click", ()=>{
   const p = window.__PACK__;
   if (!p) return;
-  p.r.horoscope = { sun:els.sun.value.trim(), moon:els.moon.value.trim(), asc:els.asc.value.trim() };
+  p.r.horoscope = { sun: els.sun.value.trim() };
   localStorage.setItem("talentResult", JSON.stringify(p.r));
   const t = buildStar800(p.top3, p.info.name, p.r.horoscope);
   p.starText = t;
   els.star800.textContent = t;
   els.starCount.textContent = `文字数：${t.length}`;
-  els.shareHint.textContent = "ホロスコープ入力を保存しました。";
+  els.shareHint.textContent = "太陽星座入力を保存しました。";
 });
 
 render();
